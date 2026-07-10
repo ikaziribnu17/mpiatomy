@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Simulasi 2</title>
+    <style>
+        /* --- 1. FONTS & RESET --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; user-select: none; }
+
+        body {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            color: #ffffff; width: 100vw; height: 100vh; overflow: hidden;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .app-container {
+            aspect-ratio: 16 / 9; width: 98vw; max-width: calc(96vh * 16 / 9);
+            height: auto; max-height: 96vh;
+            background: rgba(30, 41, 59, 0.7);
+            border: 0.2vh solid rgba(236, 72, 153, 0.3); border-radius: 2vh;
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+            padding: 1.5vh 2vw; display: flex; flex-direction: column; position: relative;
+        }
+
+        /* --- 2. HEADER & NAV --- */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.2vh solid rgba(255,255,255,0.1); padding-bottom: 1vh; flex-shrink: 0; }
+        .kuis-tabs { display: flex; gap: 1vw; }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.7);
+            padding: 1vh 1.5vw; border-radius: 3vh; font-weight: 600; font-size: 2.2vh; text-decoration: none; transition: 0.2s;
+        }
+        .tab-btn.active { background: #ec4899; color: #ffffff; box-shadow: 0 0 1.5vh rgba(236, 72, 153, 0.5); }
+        .tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.2); color: white; }
+        
+        .header-title { text-align: center; margin: 1vh 0; flex-shrink: 0; }
+        .header-title h1 { font-size: 3.8vh; color: #f472b6; }
+        .header-title p { font-size: 2.2vh; color: #cbd5e1; }
+
+        /* --- 3. WORKSPACE --- */
+        .workspace { display: flex; flex: 1; gap: 3vw; margin-top: 1.5vh; align-items: stretch; }
+
+        /* PANEL KIRI: Rak Bahan (Ikon bisa di-drag, Teks diam) */
+        .rack-panel { width: 30%; background: rgba(15, 23, 42, 0.6); border: 0.2vh solid rgba(255, 255, 255, 0.1); border-radius: 1.5vh; padding: 2vh; display: flex; flex-direction: column; gap: 1.5vh; }
+        .rack-title { font-size: 2.5vh; font-weight: 700; color: #fcd34d; text-align: center; margin-bottom: 1vh; }
+
+        .rack-item {
+            display: flex; align-items: center; gap: 1vw;
+            background: rgba(255, 255, 255, 0.05); padding: 1vh; border-radius: 1.5vh;
+            border: 0.1vh solid rgba(255,255,255,0.1); transition: 0.3s;
+        }
+
+        /* IKON BESAR DRAGGABLE */
+        .drag-icon {
+            font-size: 4.5vh; /* Ikon sangat besar */
+            background: rgba(255, 255, 255, 0.1); width: 8vh; height: 8vh;
+            display: flex; justify-content: center; align-items: center;
+            border-radius: 1.5vh; cursor: grab; border: 0.2vh dashed #cbd5e1;
+            transition: 0.2s;
+        }
+        .drag-icon:active { cursor: grabbing; transform: scale(0.9); border-color: #ec4899; }
+        .drag-icon.disabled { opacity: 0.2; cursor: not-allowed; border-style: solid; pointer-events: none; }
+        
+        /* TEKS BAHAN TERTINGGAL */
+        .item-label { font-size: 2.1vh; font-weight: 600; color: #e2e8f0; line-height: 1.3; flex: 1; }
+        .item-label span { display: block; font-size: 1.6vh; color: #94a3b8; font-weight: 400; }
+
+        /* PANEL TENGAH: Gelas Beker Dropzone */
+        .beaker-panel {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            position: relative; border-radius: 2vh; border: 0.3vh dashed transparent;
+            transition: 0.3s ease;
+        }
+        .beaker-panel.drag-over {
+            border-color: #ec4899; background: radial-gradient(circle, rgba(236, 72, 153, 0.15) 0%, transparent 70%);
+        }
+
+        /* Gelas & Air */
+        .beaker {
+            width: 28vh; height: 35vh; border: 0.6vh solid #cbd5e1; border-top: none;
+            border-radius: 0 0 2.5vh 2.5vh; background: rgba(255, 255, 255, 0.03);
+            display: flex; align-items: flex-end; overflow: hidden;
+            box-shadow: 0 1.5vh 2.5vh rgba(0,0,0,0.3); z-index: 2; position: relative;
+        }
+        .water {
+            width: 100%; height: 70%; background: rgba(56, 189, 248, 0.4);
+            position: relative; transition: background-color 1s ease;
+        }
+        .water.stirring { animation: whirlpool 0.6s linear infinite; background: rgba(56, 189, 248, 0.6); }
+
+        @keyframes whirlpool {
+            0% { transform: skewX(-3deg) scaleX(0.97); }
+            50% { transform: skewX(3deg) scaleX(1.03); }
+            100% { transform: skewX(-3deg) scaleX(0.97); }
+        }
+
+        /* PENGADUK */
+        .stirring-rod {
+            position: absolute; width: 1.5vh; height: 42vh;
+            background: linear-gradient(to right, #94a3b8, #f1f5f9, #94a3b8);
+            border-radius: 1vh; top: -5vh; left: 50%; margin-left: -0.75vh;
+            transform-origin: top center; opacity: 0; z-index: 5; transition: 0.3s;
+        }
+        .stirring-rod.active { opacity: 1; animation: stir-rod-motion 0.5s ease-in-out infinite alternate; }
+        @keyframes stir-rod-motion { 0% { transform: rotate(-15deg) translateX(-3vh); } 100% { transform: rotate(15deg) translateX(3vh); } }
+
+        /* FASA HETEROGEN */
+        /* Lapisan Minyak di Atas Permukaan Air */
+        .oil-layer {
+            position: absolute; top: 0; left: 0; width: 100%; /* Top 0 di dalam .water artinya berada tepat di permukaan atas air */
+            height: 0%; background: rgba(234, 179, 8, 0.75);
+            border-bottom: 0.2vh solid #f59e0b; transition: height 1.5s ease-in-out; display: none;
+        }
+        /* Lapisan Pasir di Dasar Air */
+        .sand-layer {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 0%;
+            background: linear-gradient(0deg, #1e293b 0%, #334155 100%); transition: height 1.5s ease-in-out; display: none;
+        }
+
+        /* --- ANIMASI TUANG (POURING) --- */
+        .pouring-container {
+            position: absolute; top: 15%; left: 50%; transform: translateX(-50%);
+            z-index: 10; display: none; flex-direction: column; align-items: center; pointer-events: none;
+        }
+        .pour-icon-visual {
+            font-size: 6vh; transform: rotate(-45deg); /* Efek miring tuang */
+            transition: 0.3s;
+        }
+        
+        /* Efek Cairan Tumpah */
+        .liquid-stream {
+            width: 1.5vh; height: 0vh; background: transparent; border-radius: 1vh;
+            transition: height 0.5s ease; position: absolute; top: 5vh; left: 2vh;
+        }
+        
+        /* Efek Partikel Jatuh */
+        .particle-area { position: absolute; top: 5vh; left: -2vh; width: 8vh; height: 25vh; }
+        .particle { position: absolute; border-radius: 50%; animation: fallDown 0.8s linear forwards; }
+        @keyframes fallDown { 0% { top: 0; opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        /* --- 4. CONTROLS --- */
+        .control-panel { width: 35%; display: flex; flex-direction: column; gap: 2vh; align-items: center; }
+        .btn-action { width: 100%; padding: 2vh 1vw; font-size: 2.6vh; font-weight: 700; border: none; border-radius: 1.5vh; cursor: pointer; box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3); transition: 0.2s; text-align: center; }
+        .btn-stir { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; }
+        .btn-stir:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-0.2vh); }
+        .btn-reset { background: #64748b; color: white; font-size: 2.2vh; padding: 1.5vh 1vw; }
+        .btn-reset:hover { background: #475569; }
+        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+
+        .status-box { width: 100%; background: rgba(15, 23, 42, 0.8); border: 0.2vh solid rgba(255,255,255,0.1); border-radius: 1.5vh; padding: 2vh; min-height: 15vh; font-size: 2.1vh; line-height: 1.6; color: #cbd5e1; }
+        .bottom-nav { margin-top: 1.5vh; border-top: 0.1vh solid rgba(255,255,255,0.1); padding-top: 1vh; flex-shrink: 0; }
+        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
+        .btn-beranda:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Nav -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+<a href="simulasi1.html" class="tab-btn">⚛️ Simulasi 1</a>
+<a href="simulasi2.html" class="tab-btn">🥤 Simulasi 2:Uji Kelarutan</a>
+<a href="simulasi3.html" class="tab-btn">🌈 Simulasi 3</a>
+<a href="simulasi4.html" class="tab-btn">☕ Simulasi 4</a>
+            </div>
+            <div style="font-size: 2vh; color: #94a3b8; font-weight: 600;">ATOMY LAB WORKSPACE</div>
+        </nav>
+
+        <header class="header-title">
+            <h1>Uji Kelarutan Zat Cair & Padat</h1>
+            <p>Seret Ikon Benda ke gelas beker untuk menuangkannya, lalu aduk untuk menganalisis campurannya!</p>
+        </header>
+
+        <!-- Area Kerja Utama -->
+        <div class="workspace">
+            
+            <!-- KIRI: Rak Zat -->
+            <div class="rack-panel">
+                <div class="rack-title">🧪 Rak Zat Terlarut</div>
+                
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="gula" data-icon="🧂">🧂</div>
+                    <div class="item-label">Serbuk Gula<span>Zat Padat (Kristal)</span></div>
+                </div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="sirup" data-icon="🥤">🥤</div>
+                    <div class="item-label">Sirup Merah<span>Zat Cair (Kental)</span></div>
+                </div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="pasir" data-icon="🪨">🪨</div>
+                    <div class="item-label">Butiran Pasir<span>Zat Padat (Kerikil)</span></div>
+                </div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="minyak" data-icon="⛽">⛽</div>
+                    <div class="item-label">Minyak Goreng<span>Zat Cair (Nonpolar)</span></div>
+                </div>
+            </div>
+
+            <!-- TENGAH: Gelas Beker Dropzone -->
+            <div class="beaker-panel" id="drop-zone">
+                
+                <!-- Animasi Penuangan (Muncul saat di-drop) -->
+                <div class="pouring-container" id="pouring-container">
+                    <div class="pour-icon-visual" id="pour-icon-visual">🧂</div>
+                    <div class="liquid-stream" id="liquid-stream"></div>
+                    <div class="particle-area" id="particle-area"></div>
+                </div>
+
+                <div class="beaker">
+                    <div class="stirring-rod" id="stirring-rod"></div>
+                    <div class="water" id="water-fluid">
+                        <div class="oil-layer" id="oil-layer"></div>
+                        <div class="sand-layer" id="sand-layer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KANAN: Kontrol -->
+            <div class="control-panel">
+                <button class="btn-action btn-stir" id="btn-stir" onclick="startStirring()" disabled>🌀 ADUK CAMPURAN</button>
+                <button class="btn-action btn-reset" onclick="resetLab()">🧹 Bersihkan Gelas</button>
+                
+                <div class="status-box" id="status-text">
+                    <b style="color: #fcd34d;">Status Laboratorium:</b><br>
+                    Gelas berisi air murni siap digunakan. <b>Tahan dan seret Ikon</b> (🧂/🥤/🪨/⛽) dari rak, lalu lepas di atas gelas beker untuk menuangkannya.
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Kembali ke Beranda Utama</a>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA -->
+    <script>
+        let selectedSolute = null;
+        let currentStatus = "idle";
+
+        const waterFluid = document.getElementById('water-fluid');
+        const oilLayer = document.getElementById('oil-layer');
+        const sandLayer = document.getElementById('sand-layer');
+        const btnStir = document.getElementById('btn-stir');
+        const statusText = document.getElementById('status-text');
+        const stirringRod = document.getElementById('stirring-rod');
+        const dropZone = document.getElementById('drop-zone');
+        const dragIcons = document.querySelectorAll('.drag-icon');
+        
+        // Elemen Penuangan
+        const pouringContainer = document.getElementById('pouring-container');
+        const pourIconVisual = document.getElementById('pour-icon-visual');
+        const liquidStream = document.getElementById('liquid-stream');
+        const particleArea = document.getElementById('particle-area');
+
+        // DRAG & DROP
+        let draggedType = null;
+        let draggedEmoji = null;
+
+        dragIcons.forEach(icon => {
+            icon.addEventListener('dragstart', (e) => {
+                if (currentStatus !== "idle") { e.preventDefault(); return; }
+                draggedType = icon.getAttribute('data-type');
+                draggedEmoji = icon.getAttribute('data-icon');
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            if (currentStatus === "idle") dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if (draggedType && currentStatus === "idle") startPouringSequence(draggedType, draggedEmoji);
+        });
+
+        // 1. Animasi Menuangkan Benda
+        function startPouringSequence(type, emoji) {
+            currentStatus = "pouring";
+            selectedSolute = type;
+
+            // Matikan semua ikon di rak
+            dragIcons.forEach(icon => icon.classList.add('disabled'));
+
+            // Tampilkan ikon yang dituang di atas gelas
+            pourIconVisual.innerText = emoji;
+            pouringContainer.style.display = 'flex';
+            statusText.innerHTML = `<b style="color: #38bdf8;">Menuangkan Zat...</b><br>Zat sedang dituang ke dalam pelarut air.`;
+
+            if (type === 'gula' || type === 'pasir') {
+                // Efek Taburan Partikel
+                let color = type === 'gula' ? '#ffffff' : '#475569'; // putih gula atau abu batu pasir
+                for (let i = 0; i < 30; i++) {
+                    setTimeout(() => {
+                        const p = document.createElement('div');
+                        p.classList.add('particle');
+                        p.style.backgroundColor = color;
+                        p.style.width = p.style.height = `${Math.random() * 0.8 + 0.4}vh`;
+                        p.style.left = `${Math.random() * 8}vh`;
+                        if(type === 'pasir') p.style.borderRadius = '20%'; // bentuk kerikil
+                        particleArea.appendChild(p);
+                        setTimeout(() => p.remove(), 800);
+                    }, i * 50);
+                }
+                setTimeout(finishPouring, 2000);
+            } 
+            else if (type === 'sirup' || type === 'minyak') {
+                // Efek Aliran Cairan
+                let color = type === 'sirup' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(245, 158, 11, 0.8)';
+                liquidStream.style.backgroundColor = color;
+                liquidStream.style.height = '18vh'; // Cairan turun ke air
+                
+                setTimeout(() => { liquidStream.style.height = '0vh'; }, 1200); // Putus aliran
+                setTimeout(finishPouring, 1700);
+            }
+        }
+
+        function finishPouring() {
+            currentStatus = "added";
+            pouringContainer.style.display = 'none';
+            btnStir.disabled = false;
+            statusText.innerHTML = `<b style="color: #38bdf8;">Zat Berhasil Dituang!</b><br>Bahan telah masuk ke beker. Klik <b>ADUK CAMPURAN</b> di atas untuk menggunakan batang pengaduk dan melihat hasil fasanya.`;
+        }
+
+        // 2. Proses Pengadukan
+        function startStirring() {
+            if (currentStatus !== "added") return;
+            currentStatus = "stirring";
+            btnStir.disabled = true;
+
+            stirringRod.classList.add('active');
+            waterFluid.classList.add('stirring');
+            statusText.innerHTML = `<b style="color: #ec4899;">Mengaduk Campuran...</b><br>Batang pengaduk memberikan gaya kinetik untuk meratakan dan mendispersikan partikel zat...`;
+
+            setTimeout(() => {
+                stirringRod.classList.remove('active');
+                waterFluid.classList.remove('stirring');
+                currentStatus = "done";
+                tampilkanHasilPengamatan(selectedSolute);
+            }, 3500);
+        }
+
+        // 3. Analisis Fasa (Minyak di atas)
+        function tampilkanHasilPengamatan(type) {
+            if (type === 'gula') {
+                waterFluid.style.backgroundColor = "rgba(224, 242, 254, 0.5)"; 
+                statusText.innerHTML = `<b style="color: #22c55e;">Hasil: CAMPURAN HOMOGEN</b><br>
+                Partikel gula terurai menjadi molekul individu dan tersebar merata.<br>
+                • <b>Ciri:</b> 1 Fasa jernih dan <b>tidak mengendap</b>.`;
+            } else if (type === 'sirup') {
+                waterFluid.style.backgroundColor = "rgba(239, 68, 68, 0.5)";
+                statusText.innerHTML = `<b style="color: #22c55e;">Hasil: CAMPURAN HOMOGEN</b><br>
+                Cairan sirup menyatu total dengan air secara sempurna.<br>
+                • <b>Ciri:</b> Komposisi rata di seluruh bagian cairan (satu warna).`;
+            } else if (type === 'pasir') {
+                sandLayer.style.display = 'block';
+                setTimeout(() => sandLayer.style.height = '15%', 50);
+                statusText.innerHTML = `<b style="color: #ef4444;">Hasil: CAMPURAN HETEROGEN</b><br>
+                Batu/pasir sangat rapat dan berat. Gravitasi menariknya ke bawah.<br>
+                • <b>Ciri:</b> 2 fasa terpisah, ada <b>endapan padat</b> di dasar gelas.`;
+            } else if (type === 'minyak') {
+                oilLayer.style.display = 'block';
+                setTimeout(() => oilLayer.style.height = '18%', 50); // Tinggi lapisan minyak meluas ke bawah
+                statusText.innerHTML = `<b style="color: #ef4444;">Hasil: CAMPURAN HETEROGEN</b><br>
+                Minyak nonpolar, air polar (tidak bisa menyatu). Minyak lebih ringan sehingga naik.<br>
+                • <b>Ciri:</b> Minyak mengapung tepat di <b>permukaan air</b>.`;
+            }
+        }
+
+        // 4. Reset
+        function resetLab() {
+            currentStatus = "idle";
+            selectedSolute = null;
+            
+            dragIcons.forEach(icon => icon.classList.remove('disabled'));
+            btnStir.disabled = true;
+
+            waterFluid.className = "water";
+            waterFluid.style.backgroundColor = "rgba(56, 189, 248, 0.4)";
+            
+            stirringRod.classList.remove('active');
+            oilLayer.style.height = '0%';
+            sandLayer.style.height = '0%';
+            
+            setTimeout(() => { oilLayer.style.display = 'none'; sandLayer.style.display = 'none'; }, 500);
+
+            particleArea.innerHTML = '';
+            statusText.innerHTML = `<b style="color: #fcd34d;">Status Laboratorium:</b><br>Gelas berisi air murni siap digunakan. <b>Tahan dan seret Ikon</b> dari rak, lalu lepas di atas gelas beker.`;
+        }
+    </script>
+</body>
+</html>

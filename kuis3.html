@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Kuis 3</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- KESEPAKATAN GAYA GLOBAL --- */
+        :root {
+            --navy: #3D5474;
+            --blue-medium: #6586B1;
+            --blue-light: #82B2D8;
+            --cyan: #26A5CB;
+            --accent-orange: #EFB25B;
+            --text-dark: #2C3E50;
+            --bg-white: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* STRICT NO-SCROLL BODY */
+        body {
+            background-color: #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: none; /* Penting untuk interaksi sentuh di layar mobile */
+        }
+
+        /* Container Kanvas 16:9 yang Responsif */
+        .canvas {
+            aspect-ratio: 16 / 9;
+            width: 98vw;
+            max-width: calc(96vh * 16 / 9);
+            height: auto;
+            max-height: 96vh;
+            
+            background-image: url('https://raw.githubusercontent.com/ikaziribnu17/xsinuli1/69ec1cd9663e74c43854b5606158d8219a8e26fd/unnamed.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2vh 5vh rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2vh;
+            padding: 2vh 3vw;
+        }
+
+        /* Overlay Latar Belakang Gelap */
+        .canvas::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(20, 35, 55, 0.85);
+            z-index: 1;
+        }
+
+        .canvas > * {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- TOP NAVIGATION BAR --- */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.2vh solid rgba(255,255,255,0.1);
+            padding-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .kuis-tabs { display: flex; gap: 1vw; }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 0.8vh 1.5vw;
+            border-radius: 3vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.8vh;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .tab-btn.active {
+            background: var(--cyan);
+            color: white;
+            box-shadow: 0 0 1.5vh rgba(38, 165, 203, 0.5);
+        }
+
+        .tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.2); color: white; }
+        
+        .nav-title { 
+            font-size: 1.6vh; 
+            color: var(--blue-light); 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1vw; 
+        }
+
+        /* --- WRAPPER FLEKSIBEL UNTUK KONTEN TENGAH --- */
+        .quiz-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+            margin: 1vh 0;
+            align-items: center;
+        }
+
+        /* Header Judul Kuis */
+        .quiz-header { text-align: center; flex-shrink: 0; margin-bottom: 1vh; width: 100%; }
+        .quiz-header h1 { font-size: 3vh; color: var(--accent-orange); margin-bottom: 0.5vh; font-weight: 800; }
+        .quiz-header p { font-size: 1.8vh; color: white; font-weight: 500; opacity: 0.9; }
+
+        /* --- 5. MATCHING AREA (Kiri & Kanan) --- */
+        .matching-area {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            position: relative;
+            width: 100%;
+            min-height: 0;
+        }
+
+        /* Layer SVG untuk menggambar garis */
+        #svg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        .column {
+            width: 42%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            gap: 1.5vh;
+            z-index: 10;
+        }
+
+        /* Item Kotak */
+        .match-item {
+            position: relative;
+            padding: 1.2vh 2vw;
+            border-radius: 1.5vh;
+            font-size: 2vh;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+            min-height: 7vh;
+            transition: border-color 0.3s;
+        }
+
+        /* Kiri: Kotak Kasus Zat */
+        .col-left .match-item {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--navy);
+            border: 0.3vh solid var(--blue-light);
+            padding-right: 3vw;
+        }
+
+        /* Kanan: Kotak Teknik Pemisahan */
+        .col-right .match-item {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--navy);
+            border: 0.3vh solid var(--accent-orange);
+            padding-left: 3vw;
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        /* Titik / Node Penghubung */
+        .node {
+            width: 2.5vh;
+            height: 2.5vh;
+            background: #ffffff;
+            border: 0.5vh solid var(--blue-medium);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: crosshair;
+            pointer-events: auto;
+            box-shadow: 0 0 0.5vh rgba(0,0,0,0.3);
+            transition: transform 0.2s, border-color 0.2s, background-color 0.2s;
+        }
+
+        .node:hover {
+            transform: translateY(-50%) scale(1.3);
+            border-color: var(--accent-orange);
+        }
+
+        .node.active {
+            border-color: var(--cyan);
+            background: #e0f2fe;
+        }
+
+        /* Posisi Titik */
+        .col-left .node { right: -1.25vh; }
+        .col-right .node { left: -1.25vh; }
+
+        /* --- 6. FOOTER CONTROLS --- */
+        .control-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1vh;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .score-board {
+            font-size: 2.2vh;
+            font-weight: 700;
+            color: var(--cyan);
+            min-height: 3vh;
+            text-shadow: 0 0.2vh 0.5vh rgba(0,0,0,0.5);
+        }
+
+        .btn-group { display: flex; gap: 1.5vw; }
+
+        .action-btn {
+            padding: 1vh 2vw;
+            font-size: 2vh;
+            font-weight: 700;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0.4vh 0.6vh rgba(0,0,0,0.3);
+        }
+
+        .btn-periksa { background: var(--cyan); color: white; }
+        .btn-periksa:hover { background: #1e8bab; transform: translateY(-0.2vh); }
+
+        .btn-reset { background: rgba(255,255,255,0.2); color: white; border: 0.1vh solid rgba(255,255,255,0.3); }
+        .btn-reset:hover { background: rgba(255,255,255,0.3); transform: translateY(-0.2vh); }
+        .action-btn:active { transform: translateY(0.1vh); }
+
+        /* Bottom Nav Beranda */
+        .bottom-nav {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 1vh;
+            border-top: 0.1vh solid rgba(255,255,255,0.1);
+            padding-top: 1.2vh;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .btn-beranda {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 0.1vh solid rgba(255, 255, 255, 0.2);
+            padding: 0.8vh 1.5vw;
+            border-radius: 0.8vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.6vh;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        .btn-beranda:hover { background: white; color: var(--navy); }
+    </style>
+</head>
+<body>
+
+    <div class="canvas">
+        <!-- Tab Navigasi Atas -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+                <a href="kuis1.html" class="tab-btn">Kuis 1</a>
+                <a href="kuis2.html" class="tab-btn">Kuis 2</a>
+                <a href="#" class="tab-btn active">Kuis 3: Lab Master</a>
+            </div>
+            <div class="nav-title">ATOMY INTERACTIVE QUIZ</div>
+        </nav>
+
+        <div class="quiz-content-wrapper">
+            <!-- Header -->
+            <header class="quiz-header">
+                <h1>Misi 4: Penyelamatan Zat</h1>
+                <p>Tarik garis dari contoh kasus campuran (Kiri) ke teknik pemisahan yang paling tepat (Kanan)!</p>
+            </header>
+
+            <!-- Area Menjodohkan Garis -->
+            <div class="matching-area" id="matching-area">
+                <!-- SVG Canvas untuk garis -->
+                <svg id="svg-layer"></svg>
+
+                <!-- Kolom Kiri (Kasus Campuran) -->
+                <div class="column col-left">
+                    <div class="match-item">🌊 Memperoleh garam murni dari air laut
+                        <div class="node" data-side="left" data-match="evaporasi"></div>
+                    </div>
+                    <div class="match-item">🚰 Memisahkan pasir dari air kotor
+                        <div class="node" data-side="left" data-match="filtrasi"></div>
+                    </div>
+                    <div class="match-item">🖊️ Mengetahui warna dasar pada tinta spidol
+                        <div class="node" data-side="left" data-match="kromatografi"></div>
+                    </div>
+                    <div class="match-item">🩸 Memisahkan sel darah dari plasma darah
+                        <div class="node" data-side="left" data-match="sentrifugasi"></div>
+                    </div>
+                    <div class="match-item">🧪 Memisahkan alkohol murni dari air
+                        <div class="node" data-side="left" data-match="distilasi"></div>
+                    </div>
+                    <div class="match-item">🧲 Menarik serbuk besi dari tumpukan tanah
+                        <div class="node" data-side="left" data-match="magnetik"></div>
+                    </div>
+                </div>
+
+                <!-- Kolom Kanan (Teknik Pemisahan - Diacak secara visual) -->
+                <div class="column col-right">
+                    <div class="match-item">Kromatografi 🌈
+                        <div class="node" data-side="right" data-match="kromatografi"></div>
+                    </div>
+                    <div class="match-item">Distilasi (Penyulingan) ⚗️
+                        <div class="node" data-side="right" data-match="distilasi"></div>
+                    </div>
+                    <div class="match-item">Evaporasi (Penguapan) ☀️
+                        <div class="node" data-side="right" data-match="evaporasi"></div>
+                    </div>
+                    <div class="match-item">Pemisahan Magnetik 🧲
+                        <div class="node" data-side="right" data-match="magnetik"></div>
+                    </div>
+                    <div class="match-item">Filtrasi (Penyaringan) ☕
+                        <div class="node" data-side="right" data-match="filtrasi"></div>
+                    </div>
+                    <div class="match-item">Sentrifugasi 🌀
+                        <div class="node" data-side="right" data-match="sentrifugasi"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Kontrol Bawah -->
+            <footer class="control-area">
+                <div class="score-board" id="score-text"></div>
+                <div class="btn-group">
+                    <button class="action-btn btn-periksa" onclick="periksaJawaban()">Periksa Jawaban</button>
+                    <button class="action-btn btn-reset" onclick="resetGame()">Reset</button>
+                </div>
+            </footer>
+        </div>
+
+        <!-- Navigasi Bawah -->
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Beranda Utama</a>
+        </div>
+    </div>
+
+    <!-- --- LOGIKA JAVASCRIPT (DRAWING & MATCHING) --- -->
+    <script>
+        const svgLayer = document.getElementById('svg-layer');
+        const matchingArea = document.getElementById('matching-area');
+        const nodes = document.querySelectorAll('.node');
+        const scoreText = document.getElementById('score-text');
+
+        let isDrawing = false;
+        let startNode = null;
+        let activeLine = null;
+        let connections = []; // Menyimpan pasangan node & garis
+        let gameChecked = false;
+
+        // Fungsi mendapatkan koordinat node relatif terhadap kotak SVG
+        function getNodePos(node) {
+            const rect = node.getBoundingClientRect();
+            const svgRect = svgLayer.getBoundingClientRect();
+            return {
+                x: rect.left + rect.width / 2 - svgRect.left,
+                y: rect.top + rect.height / 2 - svgRect.top
+            };
+        }
+
+        // Mouse & Touch Down (Mulai narik garis)
+        function pointerDown(e) {
+            if (gameChecked) return;
+            
+            // Cek apakah klik berasal dari .node
+            const target = e.target.closest('.node');
+            if (!target) return;
+
+            e.preventDefault();
+            
+            // Hapus koneksi lama jika node ini sudah pernah disambungkan sebelumnya
+            removeConnection(target);
+
+            isDrawing = true;
+            startNode = target;
+            startNode.classList.add('active');
+
+            const pos = getNodePos(startNode);
+
+            activeLine = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            activeLine.setAttribute('x1', pos.x);
+            activeLine.setAttribute('y1', pos.y);
+            activeLine.setAttribute('x2', pos.x);
+            activeLine.setAttribute('y2', pos.y);
+            activeLine.setAttribute('stroke', '#EFB25B'); // Warna oranye saat ditarik
+            activeLine.setAttribute('stroke-width', '4');
+            activeLine.setAttribute('stroke-linecap', 'round');
+            
+            svgLayer.appendChild(activeLine);
+        }
+
+        // Mouse & Touch Move (Narik garis ngikutin kursor)
+        function pointerMove(e) {
+            if (!isDrawing || !activeLine) return;
+            e.preventDefault();
+
+            const svgRect = svgLayer.getBoundingClientRect();
+            let clientX, clientY;
+
+            // Handle touch event vs mouse event
+            if (e.touches && e.touches.length > 0) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            const x = clientX - svgRect.left;
+            const y = clientY - svgRect.top;
+
+            activeLine.setAttribute('x2', x);
+            activeLine.setAttribute('y2', y);
+        }
+
+        // Mouse & Touch Up (Lepas garis)
+        function pointerUp(e) {
+            if (!isDrawing) return;
+            isDrawing = false;
+            
+            let clientX, clientY;
+            if (e.changedTouches && e.changedTouches.length > 0) {
+                clientX = e.changedTouches[0].clientX;
+                clientY = e.changedTouches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+
+            // Cari elemen apa yang berada tepat di bawah posisi kursor saat dilepas
+            // Menyembunyikan node aktif sementara agar tidak menghalangi deteksi elemen di bawahnya (untuk touch)
+            startNode.style.pointerEvents = 'none';
+            const endElement = document.elementFromPoint(clientX, clientY);
+            startNode.style.pointerEvents = 'auto';
+
+            const endNode = endElement ? endElement.closest('.node') : null;
+
+            // Validasi Koneksi
+            if (endNode && endNode !== startNode && startNode.dataset.side !== endNode.dataset.side) {
+                // Hapus garis lama pada node tujuan jika sudah ada
+                removeConnection(endNode);
+
+                // Kunci posisi garis ke titik target
+                const endPos = getNodePos(endNode);
+                activeLine.setAttribute('x2', endPos.x);
+                activeLine.setAttribute('y2', endPos.y);
+                activeLine.setAttribute('stroke', '#cbd5e1'); // Warna abu-abu idle
+
+                endNode.classList.add('active');
+                
+                connections.push({
+                    node1: startNode,
+                    node2: endNode,
+                    line: activeLine
+                });
+            } else {
+                // Batal, hapus garis
+                svgLayer.removeChild(activeLine);
+                startNode.classList.remove('active');
+            }
+
+            activeLine = null;
+            startNode = null;
+        }
+
+        // Hapus koneksi yang ada di sebuah node
+        function removeConnection(node) {
+            const index = connections.findIndex(conn => conn.node1 === node || conn.node2 === node);
+            if (index !== -1) {
+                const conn = connections[index];
+                svgLayer.removeChild(conn.line);
+                conn.node1.classList.remove('active');
+                conn.node2.classList.remove('active');
+                connections.splice(index, 1);
+            }
+        }
+
+        // Event Listeners (Mouse & Touch disatukan via pointer/touch fallback)
+        window.addEventListener('mousedown', pointerDown);
+        window.addEventListener('mousemove', pointerMove);
+        window.addEventListener('mouseup', pointerUp);
+        
+        window.addEventListener('touchstart', pointerDown, {passive: false});
+        window.addEventListener('touchmove', pointerMove, {passive: false});
+        window.addEventListener('touchend', pointerUp);
+
+        // Perbarui garis jika jendela berubah ukuran (menjaga responsivitas)
+        window.addEventListener('resize', () => {
+            connections.forEach(conn => {
+                const p1 = getNodePos(conn.node1);
+                const p2 = getNodePos(conn.node2);
+                conn.line.setAttribute('x1', p1.x);
+                conn.line.setAttribute('y1', p1.y);
+                conn.line.setAttribute('x2', p2.x);
+                conn.line.setAttribute('y2', p2.y);
+            });
+        });
+
+        // --- SISTEM PENILAIAN ---
+        function periksaJawaban() {
+            if (gameChecked) return;
+
+            const totalSoal = document.querySelectorAll('.col-left .node').length; // Ada 6
+            
+            if (connections.length < totalSoal) {
+                scoreText.style.color = 'var(--accent-orange)';
+                scoreText.innerText = `⚠️ Hubungkan semua titik terlebih dahulu! (${connections.length}/6 Terhubung)`;
+                setTimeout(() => { if(!gameChecked) scoreText.innerText = ''; }, 3000);
+                return;
+            }
+
+            let benar = 0;
+            gameChecked = true;
+
+            connections.forEach(conn => {
+                const match1 = conn.node1.dataset.match;
+                const match2 = conn.node2.dataset.match;
+
+                if (match1 === match2) {
+                    benar++;
+                    conn.line.setAttribute('stroke', '#22c55e'); // Hijau Benar
+                    conn.node1.style.borderColor = '#22c55e';
+                    conn.node2.style.borderColor = '#22c55e';
+                } else {
+                    conn.line.setAttribute('stroke', '#ef4444'); // Merah Salah
+                    conn.node1.style.borderColor = '#ef4444';
+                    conn.node2.style.borderColor = '#ef4444';
+                }
+            });
+
+            if (benar === totalSoal) {
+                scoreText.style.color = '#22c55e';
+                scoreText.innerText = `🎉 Lab Master! Jawaban Sempurna (${benar}/${totalSoal})`;
+            } else {
+                scoreText.style.color = '#ef4444';
+                scoreText.innerText = `👍 Evaluasi garis merah. Skor: ${benar} / ${totalSoal}`;
+            }
+        }
+
+        // --- RESET ---
+        function resetGame() {
+            gameChecked = false;
+            scoreText.innerText = '';
+            
+            // Hapus semua garis di SVG
+            while (svgLayer.firstChild) {
+                svgLayer.removeChild(svgLayer.firstChild);
+            }
+            
+            // Hapus penanda aktif di semua node
+            nodes.forEach(node => {
+                node.classList.remove('active');
+                node.style.borderColor = 'var(--blue-medium)'; // Kembali ke warna awal
+            });
+
+            connections = [];
+        }
+    </script>
+</body>
+</html>

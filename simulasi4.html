@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Simulasi 4</title>
+    <style>
+        /* --- 1. FONTS & RESET --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght=400;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; user-select: none; }
+        
+        body {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); color: #ffffff;
+            width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        
+        .app-container {
+            aspect-ratio: 16 / 9; width: 98vw; max-width: calc(96vh * 16 / 9); height: auto; max-height: 96vh;
+            background: rgba(30, 41, 59, 0.7); border: 0.2vh solid rgba(236, 72, 153, 0.3); border-radius: 2vh;
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 1.5vh 2vw; display: flex; flex-direction: column; position: relative;
+        }
+
+        /* --- 2. NAVIGATION & HEADER --- */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.2vh solid rgba(255,255,255,0.1); padding-bottom: 1vh; flex-shrink: 0; }
+        .kuis-tabs { display: flex; gap: 1vw; }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.7);
+            padding: 1vh 1.5vw; border-radius: 3vh; font-weight: 600; font-size: 2.2vh; text-decoration: none; transition: 0.2s;
+        }
+        .tab-btn.active { background: #ec4899; color: #ffffff; box-shadow: 0 0 1.5vh rgba(236, 72, 153, 0.5); }
+        .header-title { text-align: center; margin: 1vh 0; flex-shrink: 0; }
+        .header-title h1 { font-size: 3.8vh; color: #f472b6; }
+        .header-title p { font-size: 2.2vh; color: #cbd5e1; }
+
+        /* --- 3. WORKSPACE --- */
+        .workspace { display: flex; flex: 1; gap: 3vw; margin-top: 1.5vh; align-items: stretch; }
+        
+        /* Panel Rak Kiri */
+        .rack-panel { width: 30%; background: rgba(15, 23, 42, 0.6); border: 0.2vh solid rgba(255, 255, 255, 0.1); border-radius: 1.5vh; padding: 2vh; display: flex; flex-direction: column; gap: 1.5vh; }
+        .rack-title { font-size: 2.5vh; font-weight: 700; color: #fcd34d; text-align: center; margin-bottom: 1vh; }
+        .rack-item { display: flex; align-items: center; gap: 1vw; background: rgba(255, 255, 255, 0.05); padding: 1vh; border-radius: 1.5vh; border: 0.1vh solid rgba(255,255,255,0.1); }
+        
+        .drag-icon {
+            font-size: 4.5vh; background: rgba(255, 255, 255, 0.1); width: 8vh; height: 8vh;
+            display: flex; justify-content: center; align-items: center; border-radius: 1.5vh; cursor: grab; border: 0.2vh dashed #cbd5e1; transition: 0.2s;
+        }
+        .drag-icon:active { cursor: grabbing; transform: scale(0.9); border-color: #ec4899; }
+        .drag-icon.disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        .item-label { font-size: 2.1vh; font-weight: 600; color: #e2e8f0; }
+        .item-label span { display: block; font-size: 1.6vh; color: #94a3b8; font-weight: 400; }
+
+        /* Panel Tengah (Meja Alat) */
+        .beaker-panel { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; border-radius: 2vh; }
+        .beaker-panel.drag-over { border: 0.3vh dashed #ec4899; background: rgba(236, 72, 153, 0.1); }
+
+        /* Struktur Utama Stand Filtrasi */
+        .filtration-setup { position: relative; width: 45vh; height: 42vh; display: flex; flex-direction: column; align-items: center; }
+        
+        /* Corong Saring */
+        .funnel {
+            width: 18vh; height: 13vh; background: rgba(255, 255, 255, 0.12); border: 0.3vh solid #cbd5e1;
+            clip-path: polygon(0% 0%, 100% 0%, 60% 70%, 60% 100%, 40% 100%, 40% 70%); position: relative; z-index: 4;
+        }
+        /* Kertas Saring Segitiga */
+        .filter-paper-v {
+            position: absolute; top: 0; left: 15%; width: 70%; height: 60%;
+            background: #f1f5f9; clip-path: polygon(0% 0%, 100% 0%, 50% 100%); z-index: 5; opacity: 0.9; display: none;
+            transition: background-color 1s ease;
+        }
+        
+        /* Labu Penampung Bawah */
+        .flask {
+            width: 18vh; height: 22vh; border: 0.5vh solid #cbd5e1; border-top: none;
+            border-radius: 0 0 4vh 4vh; background: rgba(255,255,255,0.03);
+            position: absolute; bottom: 0; display: flex; align-items: flex-end; overflow: hidden; z-index: 2;
+            box-shadow: 0 1vh 2vh rgba(0,0,0,0.4);
+        }
+        /* Air Cairan Filtrat */
+        .filtrate-liquid { width: 100%; height: 0%; background: rgba(56, 189, 248, 0.5); transition: height 4s linear; }
+
+        /* --- PINDAAN TEKS INDIKATOR LAB --- */
+        .label-indicator {
+            position: absolute; background: rgba(15, 23, 42, 0.85);
+            border: 0.2vh solid rgba(255, 255, 255, 0.15); padding: 0.8vh 1.2vw;
+            border-radius: 1vh; font-size: 2vh; font-weight: 600; white-space: nowrap;
+            pointer-events: none; opacity: 0; transition: opacity 0.5s ease, transform 0.5s ease; z-index: 6;
+        }
+        .label-residu { top: 3vh; left: 30vh; border-left: 0.5vh solid #f97316; transform: translateX(2vh); }
+        .label-filtrat { bottom: 6vh; left: 30vh; border-left: 0.5vh solid #38bdf8; transform: translateX(2vh); }
+        .label-indicator.show { opacity: 1; transform: translateX(0); }
+
+        /* --- ANIMASI TUANG TINGKAT LANJUT --- */
+        .pour-container-v4 {
+            position: absolute; top: -5vh; left: 60%;
+            display: none; flex-direction: column; align-items: center; pointer-events: none; z-index: 10;
+        }
+        .beaker-pour-icon { font-size: 7vh; transform: rotate(-55deg); animation: tiltWobble 1.2s infinite alternate; }
+        .pour-stream-v4 {
+            width: 0.8vh; height: 0vh; background: transparent; 
+            border-radius: 1vh; transition: height 0.4s ease; margin-top: -1.5vh; margin-left: -4vh;
+        }
+        @keyframes tiltWobble { 0% { transform: rotate(-50deg); } 100% { transform: rotate(-65deg); } }
+
+        /* Efek Tetesan Penyaringan */
+        .drip-animation {
+            position: absolute; top: 14vh; left: 50%; width: 0.6vh; height: 2vh;
+            background: #38bdf8; border-radius: 50%; display: none; z-index: 3;
+        }
+        .drip-animation.dripping { display: block; animation: dripDrop 0.5s infinite linear; }
+        @keyframes dripDrop { 0% { top: 13vh; opacity: 1; height: 1vh; } 50% { height: 2vh; } 100% { top: 24vh; opacity: 0.1; height: 1vh; } }
+
+        /* --- 4. CONTROLS & STATUS --- */
+        .control-panel { width: 35%; display: flex; flex-direction: column; gap: 2vh; align-items: center; }
+        .btn-action { width: 100%; padding: 2vh 1vw; font-size: 2.6vh; font-weight: 700; border: none; border-radius: 1.5vh; cursor: pointer; box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3); transition: 0.2s; }
+        .btn-filter { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; }
+        .btn-filter:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-0.2vh); }
+        .btn-reset { background: #64748b; color: white; font-size: 2.2vh; padding: 1.5vh 1vw; }
+        .btn-reset:hover { background: #475569; }
+        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; transform: none !important; }
+        
+        .status-box { width: 100%; background: rgba(15, 23, 42, 0.8); border: 0.2vh solid rgba(255,255,255,0.1); border-radius: 1.5vh; padding: 2vh; min-height: 15vh; font-size: 2.1vh; line-height: 1.6; color: #cbd5e1; }
+        .bottom-nav { margin-top: 1.5vh; border-top: 0.1vh solid rgba(255,255,255,0.1); padding-top: 1vh; flex-shrink: 0; }
+        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
+        .btn-beranda:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Navigasi Utama -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+                <a href="simulasi1.html" class="tab-btn">⚛️ Simulasi 1</a>
+                <a href="simulasi2.html" class="tab-btn">🥤 Simulasi 2</a>
+                <a href="simulasi3.html" class="tab-btn">🌈 Simulasi 3</a>
+                <a href="#" class="tab-btn active">☕ Simulasi 4: Filtrasi</a>
+            </div>
+            <div style="font-size: 2vh; color: #94a3b8; font-weight: 600;">ATOMY LAB WORKSPACE</div>
+        </nav>
+
+        <header class="header-title">
+            <h1>Penyaringan Campuran Heterogen (Filtrasi)</h1>
+            <p>Seret Gelas Sampelan ke atas corong saring, lalu jalankan pemisahan partikel residu & filtrat!</p>
+        </header>
+
+        <div class="workspace">
+            
+            <!-- KIRI: Rak Bahan -->
+            <div class="rack-panel">
+                <div class="rack-title">🧪 Sampel Campuran</div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="pasir-air" data-icon="🏺">⏳</div>
+                    <div class="item-label">Air Keruh Pasir<span>Campuran Air + Pasir</span></div>
+                </div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="teh-daun" data-icon="🏺">🍂</div>
+                    <div class="item-label">Air Seduhan Teh<span>Campuran Air + Daun Teh</span></div>
+                </div>
+            </div>
+
+            <!-- TENGAH: Meja Eksperimen -->
+            <div class="beaker-panel" id="drop-zone">
+                
+                <!-- Kontainer Aliran Penuangan Baru -->
+                <div class="pour-container-v4" id="pour-container-v4">
+                    <div class="beaker-pour-icon" id="beaker-pour-icon">🏺</div>
+                    <div class="pour-stream-v4" id="pour-stream-v4"></div>
+                </div>
+                
+                <div class="filtration-setup">
+                    <!-- Penunjuk Label Residu & Filtrat -->
+                    <div class="label-indicator label-residu" id="label-residu">Residu: <span id="residu-name" style="color:#f97316;">-</span></div>
+                    <div class="label-indicator label-filtrat" id="label-filtrat">Filtrat: <span id="filtrat-name" style="color:#38bdf8;">-</span></div>
+
+                    <!-- Alat Corong -->
+                    <div class="funnel">
+                        <div class="filter-paper-v" id="filter-paper-v"></div>
+                    </div>
+                    
+                    <!-- Efek Tetesan Cairan -->
+                    <div class="drip-animation" id="drip-fluid"></div>
+                    
+                    <!-- Wadah Flask Bawah -->
+                    <div class="flask">
+                        <div class="filtrate-liquid" id="filtrate-liquid"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- KANAN: Tombol & Keterangan -->
+            <div class="control-panel">
+                <button class="btn-action btn-filter" id="btn-filter" onclick="startFiltration()" disabled>🌀 MULAI FILTRASI</button>
+                <button class="btn-action btn-reset" onclick="resetLab()">🧹 Bersihkan Alat</button>
+                
+                <div class="status-box" id="status-text">
+                    <b style="color: #fcd34d;">Status Laboratorium:</b><br>
+                    Corong saring dan wadah penampung sudah siap. <b>Seret wadah sampel campuran</b> dari rak kiri, lepaskan tepat di atas corong saring untuk menuang.
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Kembali ke Beranda Utama</a>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA SIMULASI -->
+    <script>
+        let selectedMixture = null;
+        let currentStatus = "idle";
+        
+        const filterPaper = document.getElementById('filter-paper-v');
+        const dripFluid = document.getElementById('drip-fluid');
+        const filtrateLiquid = document.getElementById('filtrate-liquid');
+        const btnFilter = document.getElementById('btn-filter');
+        const statusText = document.getElementById('status-text');
+        const dropZone = document.getElementById('drop-zone');
+        const dragIcons = document.querySelectorAll('.drag-icon');
+        
+        // Elemen penuangan baru
+        const pourContainer = document.getElementById('pour-container-v4');
+        const beakerPourIcon = document.getElementById('beaker-pour-icon');
+        const pourStream = document.getElementById('pour-stream-v4');
+
+        // Elemen Label
+        const labelResidu = document.getElementById('label-residu');
+        const labelFiltrat = document.getElementById('label-filtrat');
+        const residuName = document.getElementById('residu-name');
+        const filtratName = document.getElementById('filtrat-name');
+
+        let draggedType = null;
+        dragIcons.forEach(icon => {
+            icon.addEventListener('dragstart', (e) => {
+                if (currentStatus !== "idle") { e.preventDefault(); return; }
+                draggedType = icon.getAttribute('data-type');
+            });
+        });
+
+        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); if(currentStatus === "idle") dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            if(draggedType && currentStatus === "idle") triggerAdvancedPouring(draggedType);
+        });
+
+        // 1. Logika Penuangan yang Diperbaiki
+        function triggerAdvancedPouring(type) {
+            currentStatus = "pouring"; 
+            selectedMixture = type;
+            dragIcons.forEach(icon => icon.classList.add('disabled'));
+
+            // Memunculkan teko penuang
+            pourContainer.style.display = "flex";
+            
+            // Atur warna aliran cairan berdasarkan zat yang dipilih (Teh cokelat merah, Pasir cokelat tanah)
+            let streamColor = type === 'teh-daun' ? '#7c2d12' : '#451a03';
+            pourStream.style.backgroundColor = streamColor;
+            
+            // Jalankan animasi aliran memanjang masuk corong
+            setTimeout(() => { pourStream.style.height = "12vh"; }, 100);
+
+            statusText.innerHTML = `<b style="color: #38bdf8;">Sedang Menuangkan Sampel...</b><br>Campuran heterogen dialirkan masuk secara perlahan ke atas media kertas saring.`;
+
+            // Akhir penuangan
+            setTimeout(() => {
+                pourStream.style.height = "0vh";
+                setTimeout(() => {
+                    pourContainer.style.display = "none";
+                    filterPaper.style.display = "block";
+                    // Warnai kertas saring sesuai warna zat kotor awal
+                    filterPaper.style.backgroundColor = type === 'teh-daun' ? '#9a3412' : '#5c2d10';
+                    
+                    currentStatus = "added";
+                    btnFilter.disabled = false;
+                    statusText.innerHTML = `<b style="color: #38bdf8;">Campuran Berhasil Dituang!</b><br>Campuran tertampung di corong saring. Klik tombol <b>MULAI FILTRASI</b> untuk memulai proses pemisahan mekanis.`;
+                }, 300);
+            }, 1800);
+        }
+
+        // 2. Proses Filtrasi Aktif
+        function startFiltration() {
+            currentStatus = "filtering"; 
+            btnFilter.disabled = true;
+            
+            // Aktifkan tetesan air murni di bawah corong
+            dripFluid.classList.add('dripping');
+            
+            // Cairan penampung bawah perlahan naik dan diatur berwarna biru air jernih murni
+            filtrateLiquid.style.backgroundColor = "rgba(56, 189, 248, 0.45)";
+            filtrateLiquid.style.height = "65%"; 
+
+            // Tampilkan label penunjuk laboratorium dengan keterangan proses penyaringan
+            residuName.innerText = "Menyaring partikel padat...";
+            filtratName.innerText = "Menampung cairan lolos...";
+            labelResidu.classList.add('show');
+            labelFiltrat.classList.add('show');
+
+            statusText.innerHTML = `<b style="color: #ec4899;">Proses Penyaringan Sedang Berjalan...</b><br>Partikel air murni yang berukuran mikroskopis lolos menembus pori-pori kertas saring, sedangkan padatan kasar tertahan di atas corong.`;
+
+            // Hasil Akhir Selesai
+            setTimeout(() => {
+                currentStatus = "done";
+                dripFluid.classList.remove('dripping');
+
+                if(selectedMixture === 'teh-daun') {
+                    // Daun teh mengering cokelat tua di atas kertas saring
+                    filterPaper.style.backgroundColor = "#4c1d95"; 
+                    filterPaper.style.backgroundColor = "#7c2d12"; 
+                    
+                    // Update label penunjuk hasil riil
+                    residuName.innerText = "Ampas Daun Teh (Tertahan)";
+                    filtratName.innerText = "Air Teh Jernih / Filtrat (Lolos)";
+                    
+                    statusText.innerHTML = `<b style="color: #22c55e;">Hasil Pengamatan: FILTRASI BERHASIL</b><br>
+                    • <b>Filtrat (Bawah):</b> Didapatkan cairan teh murni jernih yang berupa air bebas ampas karena molekulnya kecil.<br>
+                    • <b>Residu (Atas):</b> Serpihan ampas daun teh kasar tertahan sempurna di atas permukaan kertas saring.<br>
+                    • <b>Kesimpulan:</b> Pemisahan campuran didasarkan pada perbedaan ukuran partikel zat terlarut.`;
+                } else {
+                    // Pasir pekat mengendap di atas kertas saring
+                    filterPaper.style.backgroundColor = "#451a03"; 
+                    
+                    // Update label penunjuk hasil riil
+                    residuName.innerText = "Butiran Pasir / Tanah (Tertahan)";
+                    filtratName.innerText = "Air Jernih Murni / Filtrat (Lolos)";
+                    
+                    statusText.innerHTML = `<b style="color: #22c55e;">Hasil Pengamatan: FILTRASI BERHASIL</b><br>
+                    • <b>Filtrat (Bawah):</b> Didapatkan air murni bening bebas dari kerikil dan partikel tanah keruh.<br>
+                    • <b>Residu (Atas):</b> Endapan butiran pasir tertahan kuat di atas corong karena ukuran fisik partikel lebih besar dari pori saring.<br>
+                    • <b>Kesimpulan:</b> Zat padat yang tidak larut (heterogen) dalam cairan terpisah total secara mekanis.`;
+                }
+            }, 4000);
+        }
+
+        // 3. Logika Reset Total
+        function resetLab() {
+            currentStatus = "idle"; 
+            selectedMixture = null;
+            
+            dragIcons.forEach(icon => icon.classList.remove('disabled'));
+            btnFilter.disabled = true; 
+            
+            filterPaper.style.display = "none";
+            filterPaper.style.backgroundColor = "#f1f5f9";
+            
+            dripFluid.className = "drip-animation"; 
+            filtrateLiquid.style.height = "0%";
+            
+            // Sembunyikan label kembali
+            labelResidu.classList.remove('show');
+            labelFiltrat.classList.remove('show');
+            
+            statusText.innerHTML = `<b style="color: #fcd34d;">Status Laboratorium:</b><br>Corong saring dan wadah penampung sudah siap. <b>Seret wadah sampel campuran</b> dari rak kiri, lepaskan tepat di atas corong saring untuk menuang.`;
+        }
+    </script>
+</body>
+</html>

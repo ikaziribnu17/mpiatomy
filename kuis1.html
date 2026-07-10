@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Kuis 1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- KESEPAKATAN GAYA GLOBAL --- */
+        :root {
+            --navy: #3D5474;
+            --blue-medium: #6586B1;
+            --blue-light: #82B2D8;
+            --cyan: #26A5CB;
+            --accent-orange: #EFB25B;
+            --text-dark: #2C3E50;
+            --bg-white: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+        }
+
+        /* STRICT NO-SCROLL BODY */
+        body {
+            background-color: #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Container Kanvas 16:9 yang Responsif */
+        .canvas {
+            aspect-ratio: 16 / 9;
+            width: 98vw;
+            max-width: calc(96vh * 16 / 9);
+            height: auto;
+            max-height: 96vh;
+            
+            background-image: url('https://raw.githubusercontent.com/ikaziribnu17/xsinuli1/69ec1cd9663e74c43854b5606158d8219a8e26fd/unnamed.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2vh 5vh rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2vh;
+            padding: 2vh 3vw;
+        }
+
+        /* Overlay Latar Belakang Gelap */
+        .canvas::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(20, 35, 55, 0.85);
+            z-index: 1;
+        }
+
+        .canvas > * {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- TOP NAVIGATION BAR --- */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.2vh solid rgba(255,255,255,0.1);
+            padding-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .kuis-tabs { display: flex; gap: 1vw; }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 0.8vh 1.5vw;
+            border-radius: 3vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.8vh;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .tab-btn.active {
+            background: var(--cyan);
+            color: white;
+            box-shadow: 0 0 1.5vh rgba(38, 165, 203, 0.5);
+        }
+
+        .tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.2); color: white; }
+        
+        .nav-title { 
+            font-size: 1.6vh; 
+            color: var(--blue-light); 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1vw; 
+        }
+
+        /* --- WRAPPER FLEKSIBEL UNTUK KONTEN TENGAH --- */
+        .quiz-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+            margin: 1.5vh 0;
+        }
+
+        /* Header Judul Kuis */
+        .quiz-header { text-align: center; flex-shrink: 0; margin-bottom: 1vh; }
+        .quiz-header h1 { font-size: 3vh; color: var(--accent-orange); margin-bottom: 0.5vh; font-weight: 800; }
+        .quiz-header p { font-size: 1.8vh; color: white; font-weight: 500; opacity: 0.9; }
+
+        /* Pool Asal Objek Zat */
+        .zat-pool-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1.5vh;
+            padding: 1.2vh;
+            border: 0.2vh dashed rgba(255, 255, 255, 0.2);
+            flex-shrink: 0;
+        }
+
+        .zat-pool {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1vh 1vw;
+        }
+
+        /* Kartu Zat */
+        .zat-card {
+            background: rgba(255, 255, 255, 0.95);
+            color: var(--navy);
+            padding: 0.8vh 1.2vw;
+            border-radius: 1vh;
+            font-weight: 700;
+            font-size: 1.8vh;
+            cursor: grab;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.2);
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+            border: 0.3vh solid transparent;
+            z-index: 10;
+        }
+
+        .zat-card:active { cursor: grabbing; transform: scale(0.95); }
+
+        /* Zona Drop Unsur & Senyawa */
+        .drop-zones-container {
+            display: flex;
+            gap: 2vw;
+            flex: 1;
+            min-height: 0;
+            margin-top: 1.5vh;
+        }
+
+        .drop-zone-box {
+            flex: 1;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            border-radius: 1.5vh;
+            color: var(--text-dark);
+            padding: 1.5vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 1vh 2vh rgba(0,0,0,0.2);
+            border: 0.2vh solid var(--blue-light);
+        }
+
+        .zone-title {
+            font-size: 2.2vh;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 1vh;
+            padding-bottom: 1vh;
+            border-bottom: 0.2vh solid rgba(0,0,0,0.05);
+            flex-shrink: 0;
+        }
+
+        .zone-title.unsur-txt { color: #16a34a; }
+        .zone-title.senyawa-txt { color: var(--cyan); }
+
+        .drop-target {
+            flex: 1;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            gap: 1vh;
+            padding: 1vh;
+            border: 0.2vh dashed rgba(0,0,0,0.15);
+            border-radius: 1vh;
+            transition: background-color 0.2s;
+            overflow: hidden; /* Mencegah scroll, ukuran kartu sudah disesuaikan */
+        }
+
+        .drop-target.drag-over {
+            background-color: rgba(38, 165, 203, 0.15);
+            border-color: var(--cyan);
+        }
+
+        /* --- FEEDBACK STYLES --- */
+        .zat-card.correct {
+            border-color: #22c55e !important;
+            background-color: #dcfce7 !important;
+            color: #14532d !important;
+        }
+
+        .zat-card.incorrect {
+            border-color: #ef4444 !important;
+            background-color: #fee2e2 !important;
+            color: #7f1d1d !important;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-0.5vw); }
+            75% { transform: translateX(0.5vw); }
+        }
+
+        /* --- KONTROL BAWAH --- */
+        .control-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1vh;
+            flex-shrink: 0;
+        }
+
+        .score-board {
+            font-size: 2vh;
+            font-weight: 800;
+            color: var(--cyan);
+            min-height: 3vh;
+            text-shadow: 0 0.2vh 0.4vh rgba(0,0,0,0.5);
+        }
+
+        .btn-group { display: flex; gap: 1.5vw; }
+
+        .action-btn {
+            padding: 1vh 2vw;
+            font-size: 1.8vh;
+            font-weight: 700;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 0.4vh 0.6vh rgba(0,0,0,0.2);
+        }
+
+        .btn-periksa { background: var(--accent-orange); color: white; }
+        .btn-periksa:hover { background: #d97706; transform: translateY(-0.2vh); }
+
+        .btn-reset { background: transparent; color: var(--blue-light); border: 0.2vh solid var(--blue-light); box-shadow: none; }
+        .btn-reset:hover { background: rgba(130, 178, 216, 0.1); transform: translateY(-0.2vh); }
+        .action-btn:active { transform: translateY(0.1vh); }
+
+        /* Navigasi Beranda */
+        .bottom-nav {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 1vh;
+            border-top: 0.1vh solid rgba(255,255,255,0.1);
+            padding-top: 1.2vh;
+            flex-shrink: 0;
+        }
+
+        .btn-beranda {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 0.1vh solid rgba(255, 255, 255, 0.2);
+            padding: 0.8vh 1.5vw;
+            border-radius: 0.8vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.6vh;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        .btn-beranda:hover { background: white; color: var(--navy); }
+    </style>
+</head>
+<body>
+
+    <div class="canvas">
+        
+        <!-- Tab Navigasi Atas -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+                <a href="#" class="tab-btn active">Kuis 1: Sortir Zat</a>
+                <a href="kuis2.html" class="tab-btn">Kuis 2</a>
+                <a href="kuis3.html" class="tab-btn">Kuis 3</a>
+            </div>
+            <div class="nav-title">ATOMY INTERACTIVE QUIZ</div>
+        </nav>
+
+        <div class="quiz-content-wrapper">
+            <!-- Header Judul Kuis -->
+            <header class="quiz-header">
+                <h1>Misi 1 & 2: Tantangan Sortir Zat</h1>
+                <p>Seret nama zat di bawah ini lalu masukkan ke dalam kelompok Unsur atau Senyawa yang tepat!</p>
+            </header>
+
+            <!-- Pool Asal Objek Zat (7 Zat) -->
+            <section class="zat-pool-container">
+                <div class="zat-pool" id="pool-zat">
+                    <div class="zat-card" draggable="true" id="zat1" data-target="unsur">🥇 Emas (Au)</div>
+                    <div class="zat-card" draggable="true" id="zat2" data-target="senyawa">💧 Air (H<sub>2</sub>O)</div>
+                    <div class="zat-card" draggable="true" id="zat3" data-target="unsur">🧱 Besi (Fe)</div>
+                    <div class="zat-card" draggable="true" id="zat4" data-target="senyawa">🧂 Garam (NaCl)</div>
+                    <div class="zat-card" draggable="true" id="zat5" data-target="unsur">💨 Oksigen (O<sub>2</sub>)</div>
+                    <div class="zat-card" draggable="true" id="zat6" data-target="senyawa">🌋 Karbon Dioksida (CO<sub>2</sub>)</div>
+                    <div class="zat-card" draggable="true" id="zat7" data-target="unsur">⚡ Tembaga (Cu)</div>
+                </div>
+            </section>
+
+            <!-- Zona Tempat Drop Target (Unsur vs Senyawa) -->
+            <section class="drop-zones-container">
+                <!-- Box Unsur -->
+                <div class="drop-zone-box unsur-theme">
+                    <div class="zone-title unsur-txt">⚛️ Kelompok Unsur</div>
+                    <div class="drop-target" id="zone-unsur" data-zone="unsur"></div>
+                </div>
+
+                <!-- Box Senyawa -->
+                <div class="drop-zone-box senyawa-theme">
+                    <div class="zone-title senyawa-txt">🧪 Kelompok Senyawa</div>
+                    <div class="drop-target" id="zone-senyawa" data-zone="senyawa"></div>
+                </div>
+            </section>
+        </div>
+
+        <!-- Area Tombol Aksi & Score -->
+        <footer class="control-area">
+            <div class="score-board" id="score-text"></div>
+            <div class="btn-group">
+                <button class="action-btn btn-periksa" onclick="periksaJawaban()">Periksa Jawaban</button>
+                <button class="action-btn btn-reset" onclick="resetGame()">Reset</button>
+            </div>
+        </footer>
+
+        <!-- Navigasi Bawah Kembali Ke Beranda Storyboard -->
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Beranda Utama</a>
+        </div>
+
+    </div>
+
+    <!-- --- LOGIKA INTEGRASI GAME SPA (VANILLA JS) --- -->
+    <script>
+        const cards = document.querySelectorAll('.zat-card');
+        const targets = document.querySelectorAll('.drop-target');
+        const poolZat = document.getElementById('pool-zat');
+        const scoreText = document.getElementById('score-text');
+        let gameChecked = false;
+
+        // Inisialisasi Drag and Drop Event Listener
+        cards.forEach(card => {
+            card.addEventListener('dragstart', dragStart);
+            card.addEventListener('dragend', dragEnd);
+        });
+
+        targets.forEach(target => {
+            target.addEventListener('dragover', dragOver);
+            target.addEventListener('dragenter', dragEnter);
+            target.addEventListener('dragleave', dragLeave);
+            target.addEventListener('drop', dragDrop);
+        });
+
+        // Menjadikan Pool Zat juga bisa menerima pengembalian kartu
+        poolZat.addEventListener('dragover', dragOver);
+        poolZat.addEventListener('drop', dragDropPool);
+
+        let draggedCard = null;
+
+        function dragStart(e) {
+            if (gameChecked) return;
+            draggedCard = this;
+            setTimeout(() => this.style.opacity = '0.4', 0);
+        }
+
+        function dragEnd() {
+            setTimeout(() => this.style.opacity = '1', 0);
+            draggedCard = null;
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function dragEnter(e) {
+            e.preventDefault();
+            if (this.classList.contains('drop-target') && !gameChecked) {
+                this.classList.add('drag-over');
+            }
+        }
+
+        function dragLeave() {
+            this.classList.remove('drag-over');
+        }
+
+        // Drop di Kotak Unsur / Senyawa
+        function dragDrop(e) {
+            this.classList.remove('drag-over');
+            if (gameChecked) return;
+            
+            const dropZone = e.target.closest('.drop-target');
+            if (dropZone && draggedCard) {
+                dropZone.appendChild(draggedCard);
+            }
+        }
+
+        // Drop kembali ke Pool Asal
+        function dragDropPool(e) {
+            if (gameChecked) return;
+            const pool = e.target.closest('.zat-pool');
+            if (pool && draggedCard) {
+                pool.appendChild(draggedCard);
+            }
+        }
+
+        // Acak Posisi Kartu Zat Saat Memulai / Reset
+        function shuffleCards() {
+            for (let i = poolZat.children.length; i >= 0; i--) {
+                poolZat.appendChild(poolZat.children[Math.random() * i | 0]);
+            }
+        }
+
+        // Fungsi Memeriksa Jawaban
+        function periksaJawaban() {
+            let totalZat = cards.length;
+            let totalDiDrop = 0;
+            let correctCount = 0;
+
+            targets.forEach(zone => {
+                const zoneType = zone.getAttribute('data-zone');
+                const zoneCards = zone.querySelectorAll('.zat-card');
+                
+                zoneCards.forEach(card => {
+                    totalDiDrop++;
+                    const cardTarget = card.getAttribute('data-target');
+                    
+                    if (cardTarget === zoneType) {
+                        card.classList.add('correct');
+                        card.classList.remove('incorrect');
+                        correctCount++;
+                    } else {
+                        card.classList.add('incorrect');
+                        card.classList.remove('correct');
+                    }
+                });
+            });
+
+            if (totalDiDrop < totalZat && totalDiDrop >= 0) {
+                scoreText.style.color = 'var(--accent-orange)';
+                scoreText.innerText = `⚠️ Selesaikan misi! Masih ada ${totalZat - totalDiDrop} zat belum dikelompokkan.`;
+                
+                setTimeout(() => {
+                    cards.forEach(card => card.classList.remove('correct', 'incorrect'));
+                    if(!gameChecked) scoreText.innerText = '';
+                }, 3000);
+                return;
+            }
+
+            gameChecked = true;
+            cards.forEach(card => {
+                card.setAttribute('draggable', 'false');
+                card.style.cursor = 'default';
+            });
+
+            if (correctCount === totalZat) {
+                scoreText.style.color = '#22c55e';
+                scoreText.innerText = `🎉 Luar Biasa! Nilai Sempurna: ${correctCount} / ${totalZat} Benar!`;
+            } else {
+                scoreText.style.color = '#ef4444';
+                scoreText.innerText = `👍 Usaha Bagus! Skor: ${correctCount} / ${totalZat} Benar.`;
+            }
+        }
+
+        // Fungsi Reset Game
+        function resetGame() {
+            gameChecked = false;
+            scoreText.innerText = '';
+            
+            cards.forEach(card => {
+                card.classList.remove('correct', 'incorrect');
+                card.setAttribute('draggable', 'true');
+                card.style.cursor = 'grab';
+                poolZat.appendChild(card);
+            });
+
+            shuffleCards();
+        }
+
+        window.onload = shuffleCards;
+    </script>
+</body>
+</html>

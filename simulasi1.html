@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Simulasi 1</title>
+    <style>
+        /* --- 1. FONTS & RESET --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+        }
+
+        /* --- 2. THEME & NO-SCROLL LAYOUT --- */
+        body {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%);
+            color: #ffffff;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            aspect-ratio: 16 / 9;
+            width: 98vw;
+            max-width: calc(96vh * 16 / 9);
+            height: auto;
+            max-height: 96vh;
+            background: rgba(30, 41, 59, 0.7);
+            border: 0.2vh solid rgba(14, 165, 233, 0.3);
+            border-radius: 2vh;
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            padding: 1.5vh 2vw;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        /* --- 3. NAVIGATION & HEADER --- */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.2vh solid rgba(255,255,255,0.1);
+            padding-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .kuis-tabs {
+            display: flex;
+            gap: 1vw;
+        }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 1vh 1.5vw;
+            border-radius: 3vh;
+            font-weight: 600;
+            font-size: 2.2vh;
+            text-decoration: none;
+            transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: #0ea5e9;
+            color: #ffffff;
+            box-shadow: 0 0 1.5vh rgba(14, 165, 233, 0.5);
+        }
+
+        .tab-btn:hover:not(.active) {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .header-title {
+            text-align: center;
+            margin: 1vh 0;
+            flex-shrink: 0;
+            position: relative;
+        }
+
+        .header-title h1 {
+            font-size: 3.8vh;
+            color: #38bdf8;
+        }
+
+        .header-title p {
+            font-size: 2.2vh;
+            color: #cbd5e1;
+        }
+
+        /* --- 4. MAIN WORKSPACE --- */
+        .workspace {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            gap: 1.5vh;
+            min-height: 0;
+            margin-top: 1vh;
+        }
+
+        /* Kotak Reaksi (Diperluas Penuh) */
+        .reaction-box {
+            flex: 1;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border: 0.3vh dashed #0ea5e9;
+            border-radius: 2vh;
+            display: flex;
+            flex-wrap: wrap;
+            align-content: center;
+            justify-content: center;
+            gap: 1vw;
+            padding: 2vh;
+            position: relative;
+        }
+
+        .reaction-box::before {
+            content: "Seret atom ke sini untuk bereaksi";
+            position: absolute;
+            color: rgba(255,255,255,0.15);
+            font-size: 2.5vh;
+            font-weight: 700;
+            pointer-events: none;
+        }
+
+        .reaction-box.drag-over {
+            background: radial-gradient(circle, rgba(34, 197, 94, 0.15) 0%, rgba(15, 23, 42, 0.85) 100%);
+            border-color: #22c55e;
+        }
+
+        /* Keranjang Atom */
+        .atom-pool {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 1.5vh;
+            padding: 1.5vh;
+            display: flex;
+            justify-content: center;
+            gap: 2.5vw;
+            border: 0.1vh solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+
+        /* Visual Atom (Bentuk Bola) */
+        .atom {
+            width: 7vh;
+            height: 7vh;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3vh;
+            font-weight: 700;
+            box-shadow: inset -0.5vh -0.5vh 1vh rgba(0,0,0,0.4), 0 0.5vh 1vh rgba(0,0,0,0.3);
+            cursor: grab;
+            position: relative;
+            transition: transform 0.1s;
+        }
+
+        .atom:active { cursor: grabbing; transform: scale(0.9); }
+        
+        /* Warna Elemen Kimia */
+        .atom-h { background: linear-gradient(135deg, #f8fafc, #cbd5e1); color: #0f172a; }
+        .atom-o { background: linear-gradient(135deg, #fca5a5, #ef4444); color: white; }
+        .atom-c { background: linear-gradient(135deg, #64748b, #334155); color: white; }
+        .atom-na { background: linear-gradient(135deg, #c084fc, #9333ea); color: white; }
+        .atom-cl { background: linear-gradient(135deg, #86efac, #22c55e); color: #064e3b; }
+
+        /* Atom di dalam reaktor */
+        .reaction-box .atom {
+            cursor: pointer;
+            animation: popIn 0.3s ease-out;
+        }
+        .reaction-box .atom:hover::after {
+            content: "×";
+            position: absolute;
+            top: -0.5vh; right: -0.5vh;
+            background: #ef4444; color: white;
+            font-size: 1.6vh; width: 2.5vh; height: 2.5vh;
+            border-radius: 50%; display: flex;
+            justify-content: center; align-items: center;
+            font-weight: 700;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0); }
+            80% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        /* --- 5. FOOTER CONTROLS & UTILITY BTN --- */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 2vw;
+            margin-top: 1.5vh;
+            flex-shrink: 0;
+        }
+
+        .btn {
+            padding: 1.5vh 2.5vw;
+            font-size: 2.2vh;
+            font-weight: 700;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        .btn-periksa { background: #10b981; color: white; font-size: 2.4vh; }
+        .btn-periksa:hover { background: #059669; transform: translateY(-0.2vh); }
+        .btn-reset { background: #64748b; color: white; }
+        .btn-reset:hover { background: #475569; transform: translateY(-0.2vh); }
+        
+        .btn-petunjuk { 
+            background: #f59e0b; 
+            color: white; 
+            position: absolute;
+            right: 0; top: 50%;
+            transform: translateY(-50%);
+            padding: 1vh 1.5vw;
+            font-size: 1.8vh;
+        }
+        .btn-petunjuk:hover { background: #d97706; }
+
+        /* --- 6. MODAL SYSTEM (Pop-up Petunjuk & Hasil) --- */
+        .modal-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            border-radius: 2vh;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-box {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            border: 0.2vh solid #38bdf8;
+            padding: 3vh 4vw;
+            border-radius: 2vh;
+            text-align: center;
+            max-width: 70%;
+            box-shadow: 0 2vh 4vh rgba(0,0,0,0.8);
+            animation: slideDown 0.3s ease-out;
+        }
+
+        /* Spesifik Modal Petunjuk Grid */
+        .blueprint-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5vh;
+            margin: 2vh 0;
+            text-align: left;
+        }
+
+        .blueprint-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1.2vh 2vw;
+            border-radius: 1vh;
+            border-left: 0.5vh solid #f59e0b;
+            font-size: 2vh;
+        }
+        .blueprint-item b { color: #38bdf8; font-size: 2.2vh; }
+
+        @keyframes slideDown {
+            from { transform: translateY(-3vh); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .modal-type { font-size: 2vh; font-weight: 700; padding: 0.5vh 1.5vw; border-radius: 3vh; display: inline-block; margin-bottom: 1.5vh; }
+        .type-unsur { background: #059669; color: white; }
+        .type-senyawa { background: #2563eb; color: white; }
+        .type-error { background: #dc2626; color: white; }
+
+        .modal-title { font-size: 3.8vh; color: #fcd34d; margin-bottom: 1vh; }
+        .modal-desc { font-size: 2.1vh; color: #cbd5e1; margin-bottom: 2.5vh; line-height: 1.6; }
+        
+        .btn-tutup {
+            background: #38bdf8; color: #0f172a;
+            padding: 1vh 3vw; font-size: 2vh; font-weight: 700;
+            border: none; border-radius: 1vh; cursor: pointer; transition: 0.2s;
+        }
+        .btn-tutup:hover { background: #0ea5e9; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            margin-top: 1.5vh;
+            border-top: 0.1vh solid rgba(255,255,255,0.1);
+            padding-top: 1vh;
+            flex-shrink: 0;
+        }
+        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
+        .btn-beranda:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Top Nav -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+<a href="simulasi1.html" class="tab-btn active">⚛️ Simulasi 1:Reaksi Zat</a>
+<a href="simulasi2.html" class="tab-btn">🥤 Simulasi 2</a>
+<a href="simulasi3.html" class="tab-btn">🌈 Simulasi 3</a>
+<a href="simulasi4.html" class="tab-btn">☕ Simulasi 4</a>
+            </div>
+            <div style="font-size: 2vh; color: #94a3b8; font-weight: 600;">ATOMY LAB WORKSPACE</div>
+        </nav>
+
+        <!-- Header -->
+        <header class="header-title">
+            <h1>Laboratorium Reaksi Zat</h1>
+            <p>Rangkai atom ke dalam kotak reaktor, lalu uji jenis zat kimia yang terbentuk!</p>
+            <!-- Tombol Mengintip Petunjuk -->
+            <button class="btn btn-petunjuk" onclick="bukaPetunjuk()">📖 Buka Petunjuk Rumus</button>
+        </header>
+
+        <!-- Area Kerja Utama -->
+        <div class="workspace">
+            <!-- Drop Zone Reaktor (Lebih Luas) -->
+            <div class="reaction-box" id="reaction-box"></div>
+
+            <!-- Keranjang Pilihan Bahan Atom -->
+            <div class="atom-pool">
+                <div class="atom atom-h" draggable="true" data-atom="H" data-color="atom-h">H</div>
+                <div class="atom atom-o" draggable="true" data-atom="O" data-color="atom-o">O</div>
+                <div class="atom atom-c" draggable="true" data-atom="C" data-color="atom-c">C</div>
+                <div class="atom atom-na" draggable="true" data-atom="Na" data-color="atom-na">Na</div>
+                <div class="atom atom-cl" draggable="true" data-atom="Cl" data-color="atom-cl">Cl</div>
+            </div>
+        </div>
+
+        <!-- Tombol Eksekusi Bawah -->
+        <footer class="controls">
+            <button class="btn btn-periksa" onclick="periksaReaksi()">🧪 Periksa Hasil Reaksi</button>
+            <button class="btn btn-reset" onclick="bersihkanReaktor()">🧹 Bersihkan Kotak</button>
+        </footer>
+
+        <!-- INTERFACE POP-UP 1: MODAL PETUNJUK RUMUS -->
+        <div class="modal-overlay" id="blueprint-modal">
+            <div class="modal-box" style="max-width: 60%;">
+                <h2 style="color: #f59e0b; font-size: 3vh;">📖 Buku Panduan Kode Rumus Zat</h2>
+                <p style="color: #cbd5e1; font-size: 1.8vh; margin-bottom: 1vh;">Berikut adalah target rumus molekul senyawa yang dapat kamu buat di laboratorium ini:</p>
+                
+                <div class="blueprint-grid">
+                    <div class="blueprint-item">💧 Air: <b>H<sub>2</sub>O</b></div>
+                    <div class="blueprint-item">🧂 Garam Dapur: <b>NaCl</b></div>
+                    <div class="blueprint-item">💨 Karbon Dioksida: <b>CO<sub>2</sub></b></div>
+                    <div class="blueprint-item">🧼 Soda Api: <b>NaOH</b></div>
+                    <div class="blueprint-item">⚠️ Karbon Monoksida: <b>CO</b></div>
+                    <div class="blueprint-item">🧪 Hidrogen Peroksida: <b>H<sub>2</sub>O<sub>2</sub></b></div>
+                    <div class="blueprint-item">🧪 Asam Klorida: <b>HCl</b></div>
+                    <div class="blueprint-item">🍎 Glukosa: <b>C<sub>6</sub>H<sub>12</sub>O<sub>6</sub></b></div>
+                </div>
+
+                <button class="btn-tutup" onclick="tutupPetunjuk()">Tutup Panduan</button>
+            </div>
+        </div>
+
+        <!-- INTERFACE POP-UP 2: MODAL HASIL ANALISIS REAKSI -->
+        <div class="modal-overlay" id="result-modal">
+            <div class="modal-box">
+                <div id="modal-badge" class="modal-type">Status</div>
+                <h2 class="modal-title" id="modal-title">Nama Zat</h2>
+                <p class="modal-desc" id="modal-desc">Deskripsi analisis.</p>
+                <button class="btn-tutup" onclick="tutupResult()">Kembali Mencoba</button>
+            </div>
+        </div>
+
+        <!-- Footer Tautan Beranda -->
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Kembali ke Beranda Utama</a>
+        </div>
+    </div>
+
+    <!-- --- SISTEM LOGIKA JAVASCRIPT SIMULASI --- -->
+    <script>
+        // Database Sifat Unsur untuk analisis Atom Tunggal / Unsur Sejenis
+        const dataUnsur = {
+            "H": { nama: "Hidrogen", noAtom: 1, massa: 1 },
+            "O": { nama: "Oksigen", noAtom: 8, massa: 16 },
+            "C": { nama: "Karbon", noAtom: 6, massa: 12 },
+            "Na": { nama: "Natrium", noAtom: 11, massa: 23 },
+            "Cl": { nama: "Klorin", noAtom: 17, massa: 35.5 }
+        };
+
+        const reactionBox = document.getElementById('reaction-box');
+        const sourceAtoms = document.querySelectorAll('.atom-pool .atom');
+        const resultModal = document.getElementById('result-modal');
+        const blueprintModal = document.getElementById('blueprint-modal');
+
+        let draggedAtomData = null;
+
+        // Implementasi mekanisme Drag and Drop dasar
+        sourceAtoms.forEach(atom => {
+            atom.addEventListener('dragstart', function() {
+                draggedAtomData = {
+                    type: this.getAttribute('data-atom'),
+                    colorClass: this.getAttribute('data-color')
+                };
+            });
+        });
+
+        reactionBox.addEventListener('dragover', e => {
+            e.preventDefault();
+            reactionBox.classList.add('drag-over');
+        });
+
+        reactionBox.addEventListener('dragleave', () => {
+            reactionBox.classList.remove('drag-over');
+        });
+
+        reactionBox.addEventListener('drop', e => {
+            e.preventDefault();
+            reactionBox.classList.remove('drag-over');
+            
+            if (draggedAtomData) {
+                const newAtom = document.createElement('div');
+                newAtom.classList.add('atom', draggedAtomData.colorClass);
+                newAtom.innerText = draggedAtomData.type;
+                newAtom.setAttribute('data-atom', draggedAtomData.type);
+                
+                // Mekanisme klik untuk menghapus atom individu dari papan reaktor
+                newAtom.addEventListener('click', function() { this.remove(); });
+
+                reactionBox.appendChild(newAtom);
+                draggedAtomData = null;
+            }
+        });
+
+        // Pengendali Tampilan Modal Petunjuk
+        function bukaPetunjuk() { blueprintModal.style.display = 'flex'; }
+        function tutupPetunjuk() { blueprintModal.style.display = 'none'; }
+        function tutupResult() { resultModal.style.display = 'none'; }
+
+        // Bersihkan Papan Reaktor
+        function bersihkanReaktor() { reactionBox.innerHTML = ''; }
+
+        // --- CORE ALGORITMA PENGECEKAN REAKSI KIMIA ---
+        function periksaReaksi() {
+            const atomsInBox = reactionBox.querySelectorAll('.atom');
+            
+            if (atomsInBox.length === 0) {
+                tampilkanResult("error", "Reaktor Masih Kosong!", "Kamu belum menarik atom apa pun ke area kotak reaksi. Silakan bereksperimen dengan menarik elemen atom dari keranjang bawah.");
+                return;
+            }
+
+            // Hitung distribusi jumlah atom yang dimasukkan siswa
+            let counts = { "H": 0, "O": 0, "C": 0, "Na": 0, "Cl": 0 };
+            let uniqueTypes = 0;
+            let lastFoundType = "";
+
+            atomsInBox.forEach(a => {
+                let type = a.getAttribute('data-atom');
+                if (counts[type] === 0) uniqueTypes++;
+                counts[type]++;
+                lastFoundType = type;
+            });
+
+            const totalAtoms = atomsInBox.length;
+
+            // KATEGORI 1: DETEKSI UNSUR (Hanya ada satu jenis atom unik)
+            if (uniqueTypes === 1) {
+                const info = dataUnsur[lastFoundType];
+                tampilkanResult(
+                    "unsur", 
+                    `Koleksi Unsur: ${info.nama} (${lastFoundType})`, 
+                    `Hebat! Karena seluruh materi hanya terbentuk dari 1 jenis atom yang sejenis, materi ini mutlak dikelompokkan sebagai <b>UNSUR</b>.<br><br>
+                    📊 <b>Data Identitas Atom:</b><br>
+                    • Nama Elemen: ${info.nama}<br>
+                    • Nomor Atom: ${info.noAtom} <i>(Jumlah proton)</i><br>
+                    • Nomor Massa: ${info.massa} <i>(Inti atom)</i><br><br>
+                    <i>Kamu berhasil mengumpulkan total sebanyak ${totalAtoms} buah partikel atom ${info.nama}.</i>`
+                );
+                return;
+            }
+
+            // KATEGORI 2: DETEKSI SENYAWA BERDASARKAN COMBINATION LOGIC
+            
+            // 1. Air (H2O)
+            if (counts["H"] === 2 && counts["O"] === 1 && totalAtoms === 3) {
+                tampilkanResult("senyawa", "💧 Air (H<sub>2</sub>O)", "Sintesis Sukses! Kamu membentuk senyawa <b>Air</b>.<br>Zat cair jernih ini tersusun atas kombinasi ikatan kovalen antara dua atom Hidrogen dan satu atom Oksigen yang sangat penting bagi kehidupan sel di bumi.");
+            
+            // 2. Garam Dapur (NaCl)
+            } else if (counts["Na"] === 1 && counts["Cl"] === 1 && totalAtoms === 2) {
+                tampilkanResult("senyawa", "🧂 Garam Dapur (NaCl)", "Sintesis Sukses! Kamu merangkai Natrium Klorida (<b>Garam Dapur</b>).<br>Gabungan dari logam Natrium padat yang sangat reaktif dan gas Klorin yang beracun, ketika terikat secara kimiawi berubah total menjadi kristal bumbu dapur aman konsumsi.");
+            
+            // 3. Karbon Dioksida (CO2)
+            } else if (counts["C"] === 1 && counts["O"] === 2 && totalAtoms === 3) {
+                tampilkanResult("senyawa", "💨 Karbon Dioksida (CO<sub>2</sub>)", "Sintesis Sukses! Ini adalah molekul gas <b>Karbon Dioksida</b>.<br>Senyawa gas sisa pembakaran dalam tubuh (respirasi) manusia dan hewan yang dihembuskan keluar, sekaligus zat vital bagi tanaman untuk memasak makanan (fotosintesis).");
+            
+            // 4. Soda Api (NaOH)
+            } else if (counts["Na"] === 1 && counts["O"] === 1 && counts["H"] === 1 && totalAtoms === 3) {
+                tampilkanResult("senyawa", "🧼 Soda Api / Kaustik (NaOH)", "Sintesis Sukses! Kamu menyusun senyawa alkali kuat <b>Natrium Hidroksida</b>.<br>Zat korosif padat putih yang larut dalam air ini dimanfaatkan luas pada industri pembuatan sabun, detergen, dan pembersih pipa tersumbat.");
+            
+            // 5. Karbonmonoksida (CO) -- BARU
+            } else if (counts["C"] === 1 && counts["O"] === 1 && totalAtoms === 2) {
+                tampilkanResult("senyawa", "⚠️ Karbon Monoksida (CO)", "Sintesis Sukses! Kamu membuat senyawa gas <b>Karbon Monoksida</b>.<br>Gas yang sangat berbahaya, tidak berwarna, dan tidak berbau. Terbentuk dari hasil pembakaran karbon yang tidak sempurna, seperti pada emisi gas buang knalpot kendaraan bermotor.");
+            
+            // 6. Hidrogen Peroksida (H2O2) -- BARU
+            } else if (counts["H"] === 2 && counts["O"] === 2 && totalAtoms === 4) {
+                tampilkanResult("senyawa", "🧪 Hidrogen Peroksida (H<sub>2</sub>O<sub>2</sub>)", "Sintesis Sukses! Kamu menciptakan molekul <b>Hidrogen Peroksida</b>.<br>Zat cair bening dengan viskositas sedikit lebih kental daripada air. Senyawa ini bersifat sebagai oksidator kuat yang sangat ampuh digunakan sebagai agen pemutih atau antiseptik pembersih luka ringan.");
+            
+            // 7. Asam Klorida (HCl) -- BARU
+            } else if (counts["H"] === 1 && counts["Cl"] === 1 && totalAtoms === 2) {
+                tampilkanResult("senyawa", "🧪 Asam Klorida (HCl)", "Sintesis Sukses! Ini adalah larutan asam kuat <b>Asam Klorida</b>.<br>Senyawa gas Hidrogen Klorida yang terlarut dalam air. Di alam, senyawa ini diproduksi alami di dalam lambung manusia dalam kadar tertentu untuk membantu mencerna makanan dan mematikan kuman penyakit.");
+            
+            // 8. Glukosa (C6H12O6) -- BARU (Skala Besar)
+            } else if (counts["C"] === 6 && counts["H"] === 12 && counts["O"] === 6 && totalAtoms === 24) {
+                tampilkanResult("senyawa", "🍎 Karbohidrat Glukosa (C<sub>6</sub>H<sub>12</sub>O<sub>6</sub>)", "Luar Biasa Sempurna! Kamu berhasil merangkai senyawa organik kompleks: <b>Glukosa</b> (gula sederhana).<br>Kombinasi makro molekul yang mengagumkan! Glukosa diproduksi oleh tumbuhan hijau lewat proses fotosintesis dan berperan sebagai bahan bakar sumber energi paling utama untuk metabolisme makhluk hidup.");
+            
+            } else {
+                // KATEGORI 3: GAGAL / KOMBINASI ACAK (Materi Tidak Stabil)
+                tampilkanResult("error", "💥 Reaksi Tidak Stabil / Campuran Acak", "Kombinasi atom yang dimasukkan belum membentuk struktur molekul senyawa yang stabil atau belum dikenali dalam misi lab ini. Silakan bersihkan reaktor atau intip <b>Petunjuk Rumus</b> di kanan atas.");
+            }
+        }
+
+        // Tampilkan Hasil Analisis Reaksi
+        function tampilkanResult(tipe, judul, deskripsi) {
+            const badge = document.getElementById('modal-badge');
+            badge.className = 'modal-type'; 
+            
+            if (tipe === 'unsur') {
+                badge.classList.add('type-unsur');
+                badge.innerText = "⭐ IDENTIFIKASI: UNSUR";
+            } else if (tipe === 'senyawa') {
+                badge.classList.add('type-senyawa');
+                badge.innerText = "🌟 IDENTIFIKASI: SENYAWA MUTLAK";
+            } else {
+                badge.classList.add('type-error');
+                badge.innerText = "💥 REAKSI GAGAL";
+            }
+
+            document.getElementById('modal-title').innerHTML = judul;
+            document.getElementById('modal-desc').innerHTML = deskripsi;
+            resultModal.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Kuis 2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- KESEPAKATAN GAYA GLOBAL --- */
+        :root {
+            --navy: #3D5474;
+            --blue-medium: #6586B1;
+            --blue-light: #82B2D8;
+            --cyan: #26A5CB;
+            --accent-orange: #EFB25B;
+            --text-dark: #2C3E50;
+            --bg-white: #FFFFFF;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            user-select: none;
+        }
+
+        /* STRICT NO-SCROLL BODY */
+        body {
+            background-color: #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Container Kanvas 16:9 yang Responsif */
+        .canvas {
+            aspect-ratio: 16 / 9;
+            width: 98vw;
+            max-width: calc(96vh * 16 / 9);
+            height: auto;
+            max-height: 96vh;
+            
+            background-image: url('https://raw.githubusercontent.com/ikaziribnu17/xsinuli1/69ec1cd9663e74c43854b5606158d8219a8e26fd/unnamed.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 2vh 5vh rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 2vh;
+            padding: 2vh 3vw;
+        }
+
+        /* Overlay Latar Belakang Gelap */
+        .canvas::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(20, 35, 55, 0.85);
+            z-index: 1;
+        }
+
+        .canvas > * {
+            position: relative;
+            z-index: 10;
+        }
+
+        /* --- TOP NAVIGATION BAR --- */
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 0.2vh solid rgba(255,255,255,0.1);
+            padding-bottom: 1vh;
+            flex-shrink: 0;
+        }
+
+        .kuis-tabs { display: flex; gap: 1vw; }
+
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: rgba(255, 255, 255, 0.7);
+            border: none;
+            padding: 0.8vh 1.5vw;
+            border-radius: 3vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.8vh;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+
+        .tab-btn.active {
+            background: var(--cyan);
+            color: white;
+            box-shadow: 0 0 1.5vh rgba(38, 165, 203, 0.5);
+        }
+
+        .tab-btn:hover:not(.active) { background: rgba(255, 255, 255, 0.2); color: white; }
+        
+        .nav-title { 
+            font-size: 1.6vh; 
+            color: var(--blue-light); 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.1vw; 
+        }
+
+        /* --- WRAPPER FLEKSIBEL UNTUK KONTEN TENGAH --- */
+        .quiz-content-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            min-height: 0; 
+            margin: 1.5vh 0;
+            align-items: center;
+        }
+
+        /* Header Judul Kuis */
+        .quiz-header { text-align: center; flex-shrink: 0; margin-bottom: 2vh; width: 100%; }
+        .quiz-header h1 { font-size: 3vh; color: var(--accent-orange); margin-bottom: 0.5vh; font-weight: 800; }
+        .quiz-header p { font-size: 1.8vh; color: white; font-weight: 500; opacity: 0.9; }
+
+        /* --- 5. GAME AREA (Flashcard & Buttons) --- */
+        .game-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2vh;
+            width: 100%;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            width: 65%;
+            font-size: 1.8vh;
+            font-weight: 700;
+            color: var(--cyan);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 1vh 2vw;
+            border-radius: 1vh;
+            border: 0.2vh solid rgba(255, 255, 255, 0.2);
+        }
+
+        /* Kartu Pertanyaan di Tengah */
+        .flashcard {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            color: var(--navy);
+            width: 65%;
+            height: 30vh;
+            border-radius: 2vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1vh 2vh rgba(0,0,0,0.3);
+            border: 0.4vh solid var(--blue-light);
+            transition: transform 0.2s, border-color 0.3s, background-color 0.3s;
+        }
+
+        .flashcard .emoji {
+            font-size: 10vh;
+            margin-bottom: 1vh;
+        }
+
+        .flashcard .zat-name {
+            font-size: 4vh;
+            font-weight: 800;
+        }
+
+        /* Animasi Benar/Salah */
+        .flashcard.correct {
+            border-color: #22c55e !important;
+            background: #dcfce7 !important;
+            transform: scale(1.05);
+        }
+
+        .flashcard.incorrect {
+            border-color: #ef4444 !important;
+            background: #fee2e2 !important;
+            animation: shake 0.3s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-0.5vw); }
+            75% { transform: translateX(0.5vw); }
+        }
+
+        /* Tombol Pilihan Homogen / Heterogen */
+        .choices-container {
+            display: flex;
+            gap: 2vw;
+            width: 65%;
+        }
+
+        .choice-btn {
+            flex: 1;
+            padding: 2vh 1vw;
+            font-size: 2.2vh;
+            font-weight: 800;
+            border: none;
+            border-radius: 1.5vh;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5vh;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+        }
+
+        .choice-btn span {
+            font-size: 1.4vh;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+
+        .btn-homogen {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            border: 0.2vh solid #60a5fa;
+        }
+
+        .btn-heterogen {
+            background: linear-gradient(135deg, var(--accent-orange) 0%, #d97706 100%);
+            color: white;
+            border: 0.2vh solid #fbbf24;
+        }
+
+        .choice-btn:hover {
+            transform: translateY(-0.3vh);
+            filter: brightness(1.1);
+        }
+
+        .choice-btn:active {
+            transform: translateY(0.1vh);
+        }
+
+        /* Layar Hasil Akhir */
+        .result-screen {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+            width: 100%;
+        }
+
+        .result-screen h2 {
+            font-size: 5vh;
+            color: var(--accent-orange);
+            margin-bottom: 2vh;
+            font-weight: 800;
+        }
+
+        .final-score {
+            font-size: 8vh;
+            font-weight: 800;
+            color: #22c55e;
+            margin-bottom: 2vh;
+            text-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+        }
+
+        .btn-restart {
+            background: var(--cyan);
+            color: white;
+            padding: 1.5vh 3vw;
+            font-size: 2.2vh;
+            font-weight: 700;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3);
+        }
+
+        .btn-restart:hover {
+            background: #1e8bab;
+            transform: scale(1.05);
+        }
+
+        /* --- FOOTER / BOTTOM NAV --- */
+        .bottom-nav {
+            display: flex;
+            justify-content: flex-start;
+            margin-top: 1vh;
+            border-top: 0.1vh solid rgba(255,255,255,0.1);
+            padding-top: 1.2vh;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .btn-beranda {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 0.1vh solid rgba(255, 255, 255, 0.2);
+            padding: 0.8vh 1.5vw;
+            border-radius: 0.8vh;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.6vh;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5vw;
+        }
+
+        .btn-beranda:hover { background: white; color: var(--navy); }
+    </style>
+</head>
+<body>
+
+    <div class="canvas">
+        
+        <!-- Tab Navigasi Atas -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+                <a href="kuis1.html" class="tab-btn">Kuis 1</a>
+                <a href="#" class="tab-btn active">Kuis 2: Detektif Campuran</a>
+                <a href="kuis3.html" class="tab-btn">Kuis 3</a>
+            </div>
+            <div class="nav-title">ATOMY INTERACTIVE QUIZ</div>
+        </nav>
+
+        <div class="quiz-content-wrapper">
+            <!-- Header Judul Kuis -->
+            <header class="quiz-header" id="header-area">
+                <h1>Misi 3: Detektif Campuran</h1>
+                <p>Amati campuran di bawah ini, lalu tebak dengan cepat apakah ia Homogen atau Heterogen!</p>
+            </header>
+
+            <!-- Area Game Berlangsung -->
+            <div class="game-area" id="play-area">
+                <div class="status-bar">
+                    <div id="progress-text">Soal: 1 / 8</div>
+                    <div id="score-text">Skor: 0</div>
+                </div>
+
+                <div class="flashcard" id="card-display">
+                    <div class="emoji" id="card-emoji">🥤</div>
+                    <div class="zat-name" id="card-name">Air Sirup</div>
+                </div>
+
+                <div class="choices-container">
+                    <button class="choice-btn btn-homogen" onclick="checkAnswer('homogen')">
+                        HOMOGEN
+                        <span>(Tercampur Sempurna)</span>
+                    </button>
+                    <button class="choice-btn btn-heterogen" onclick="checkAnswer('heterogen')">
+                        HETEROGEN
+                        <span>(Ada Endapan/Batas)</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Area Hasil Akhir (Sembunyi by default) -->
+            <div class="result-screen" id="result-area">
+                <h2>Penyelidikan Selesai!</h2>
+                <p style="font-size: 2.2vh; color: #cbd5e1;">Total Keberhasilan Detektif:</p>
+                <div class="final-score" id="final-score-text">0 / 8</div>
+                <button class="btn-restart" onclick="initGame()">🔄 Main Lagi</button>
+            </div>
+        </div>
+
+        <!-- Navigasi Bawah Kembali Ke Beranda -->
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Beranda Utama</a>
+        </div>
+
+    </div>
+
+    <!-- --- LOGIKA GAME JAVASCRIPT --- -->
+    <script>
+        // Database Soal
+        const questionsDB = [
+            { name: "Air Sirup", emoji: "🥤", type: "homogen" },
+            { name: "Air + Pasir", emoji: "🏖️", type: "heterogen" },
+            { name: "Kopi Hitam", emoji: "☕", type: "heterogen" },
+            { name: "Teh Manis", emoji: "🍵", type: "homogen" },
+            { name: "Air + Minyak", emoji: "🛢️", type: "heterogen" },
+            { name: "Udara Bersih", emoji: "🌬️", type: "homogen" },
+            { name: "Sereal + Susu", emoji: "🥣", type: "heterogen" },
+            { name: "Air Garam", emoji: "🧂", type: "homogen" }
+        ];
+
+        let currentQuestions = [];
+        let currentIndex = 0;
+        let score = 0;
+        let isWaiting = false; // Mencegah spam klik
+
+        // DOM Elements
+        const playArea = document.getElementById('play-area');
+        const resultArea = document.getElementById('result-area');
+        const headerArea = document.getElementById('header-area');
+        const cardDisplay = document.getElementById('card-display');
+        const cardEmoji = document.getElementById('card-emoji');
+        const cardName = document.getElementById('card-name');
+        const progressText = document.getElementById('progress-text');
+        const scoreText = document.getElementById('score-text');
+        const finalScoreText = document.getElementById('final-score-text');
+
+        // Fungsi Mengacak Soal (Fisher-Yates Shuffle)
+        function shuffleArray(array) {
+            let shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Mulai Game
+        function initGame() {
+            currentQuestions = shuffleArray(questionsDB);
+            currentIndex = 0;
+            score = 0;
+            isWaiting = false;
+            
+            playArea.style.display = 'flex';
+            headerArea.style.display = 'block';
+            resultArea.style.display = 'none';
+            
+            updateScoreBoard();
+            loadQuestion();
+        }
+
+        // Tampilkan Soal Saat Ini
+        function loadQuestion() {
+            cardDisplay.className = 'flashcard'; // Reset animasi
+            const q = currentQuestions[currentIndex];
+            cardEmoji.innerText = q.emoji;
+            cardName.innerText = q.name;
+            progressText.innerText = `Soal: ${currentIndex + 1} / ${currentQuestions.length}`;
+        }
+
+        // Cek Jawaban Pemain
+        function checkAnswer(selectedType) {
+            if (isWaiting) return;
+            isWaiting = true;
+
+            const q = currentQuestions[currentIndex];
+            const isCorrect = (selectedType === q.type);
+
+            if (isCorrect) {
+                score++;
+                cardDisplay.classList.add('correct');
+            } else {
+                cardDisplay.classList.add('incorrect');
+            }
+
+            updateScoreBoard();
+
+            // Jeda sejenak untuk melihat animasi sebelum lanjut
+            setTimeout(() => {
+                currentIndex++;
+                if (currentIndex < currentQuestions.length) {
+                    isWaiting = false;
+                    loadQuestion();
+                } else {
+                    showResults();
+                }
+            }, 800); // 0.8 detik jeda
+        }
+
+        function updateScoreBoard() {
+            scoreText.innerText = `Skor: ${score}`;
+        }
+
+        // Tampilkan Layar Akhir
+        function showResults() {
+            playArea.style.display = 'none';
+            headerArea.style.display = 'none';
+            resultArea.style.display = 'flex';
+            
+            finalScoreText.innerText = `${score} / ${currentQuestions.length}`;
+            
+            if (score === currentQuestions.length) {
+                finalScoreText.style.color = '#22c55e'; // Hijau jika sempurna
+            } else if (score >= currentQuestions.length / 2) {
+                finalScoreText.style.color = 'var(--accent-orange)'; // Oranye jika cukup
+            } else {
+                finalScoreText.style.color = '#ef4444'; // Merah jika kurang
+            }
+        }
+
+        // Jalankan saat halaman dibuka
+        window.onload = initGame;
+    </script>
+</body>
+</html>

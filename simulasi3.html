@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Petualangan ATOMY - Simulasi 3</title>
+    <style>
+        /* --- FONTS & RESET --- */
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; user-select: none; }
+        body {
+            background: radial-gradient(circle, #1e293b 0%, #0f172a 100%); color: #ffffff; 
+            width: 100vw; height: 100vh; overflow: hidden; display: flex; justify-content: center; align-items: center;
+        }
+        .app-container {
+            aspect-ratio: 16 / 9; width: 98vw; max-width: calc(96vh * 16 / 9); height: auto; max-height: 96vh;
+            background: rgba(30, 41, 59, 0.7); border: 0.2vh solid rgba(236, 72, 153, 0.3); border-radius: 2vh;
+            box-shadow: 0 1vh 3vh rgba(0,0,0,0.5); backdrop-filter: blur(10px); padding: 1.5vh 2vw; display: flex; flex-direction: column; position: relative;
+        }
+        
+        /* --- NAVIGATION --- */
+        .top-nav { display: flex; justify-content: space-between; align-items: center; border-bottom: 0.2vh solid rgba(255,255,255,0.1); padding-bottom: 1vh; flex-shrink: 0; }
+        .kuis-tabs { display: flex; gap: 1vw; }
+        .tab-btn {
+            background: rgba(255, 255, 255, 0.1); color: rgba(255, 255, 255, 0.7);
+            padding: 1vh 1.5vw; border-radius: 3vh; font-weight: 600; font-size: 2.2vh; text-decoration: none; transition: 0.2s;
+        }
+        .tab-btn.active { background: #ec4899; color: #ffffff; box-shadow: 0 0 1.5vh rgba(236, 72, 153, 0.5); }
+        .header-title { text-align: center; margin: 1vh 0; flex-shrink: 0; }
+        .header-title h1 { font-size: 3.8vh; color: #f472b6; }
+        .header-title p { font-size: 2.2vh; color: #cbd5e1; }
+
+        /* --- WORKSPACE --- */
+        .workspace { display: flex; flex: 1; gap: 3vw; margin-top: 1.5vh; align-items: stretch; }
+        
+        /* Panel Rak */
+        .rack-panel { width: 30%; background: rgba(15, 23, 42, 0.6); border: 0.2vh solid rgba(255, 255, 255, 0.1); border-radius: 1.5vh; padding: 2vh; display: flex; flex-direction: column; gap: 1.5vh; }
+        .rack-title { font-size: 2.5vh; font-weight: 700; color: #fcd34d; text-align: center; margin-bottom: 1vh; }
+        .rack-item { display: flex; align-items: center; gap: 1vw; background: rgba(255, 255, 255, 0.05); padding: 1vh; border-radius: 1.5vh; border: 0.1vh solid rgba(255,255,255,0.1); }
+        
+        /* Ikon Bola Tinta Draggable */
+        .drag-icon {
+            font-size: 4vh; background: rgba(255, 255, 255, 0.1); width: 8vh; height: 8vh;
+            display: flex; justify-content: center; align-items: center; border-radius: 1.5vh; cursor: grab; border: 0.2vh dashed #cbd5e1; transition: 0.2s;
+        }
+        .drag-icon:active { cursor: grabbing; transform: scale(0.9); border-color: #ec4899; }
+        .drag-icon.disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
+        .item-label { font-size: 2.1vh; font-weight: 600; color: #e2e8f0; }
+
+        /* Panel Beker & Animasi */
+        .beaker-panel { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; border-radius: 2vh; transition: 0.3s; }
+        .beaker-panel.drag-over { border: 0.3vh dashed #ec4899; background: rgba(236, 72, 153, 0.1); }
+        
+        /* Gelas Beker */
+        .beaker { 
+            width: 26vh; height: 32vh; 
+            border: 0.6vh solid #cbd5e1; border-top: none; border-radius: 0 0 2.5vh 2.5vh; 
+            background: rgba(255,255,255,0.03); position: relative; 
+            display: flex; justify-content: center; align-items: flex-end; 
+            box-shadow: 0 1.5vh 2.5vh rgba(0,0,0,0.3); overflow: hidden; /* Mencegah elemen keluar dari beker */
+        }
+        
+        /* Air Eluen */
+        .eluent { 
+            width: 100%; height: 15%; 
+            background: rgba(56, 189, 248, 0.4); 
+            position: absolute; bottom: 0; left: 0; z-index: 2; 
+        } 
+        
+        /* Kertas Kromatografi (Di dalam gelas) */
+        .chromato-paper {
+            position: absolute; bottom: 1vh; /* Terangkat sedikit dari dasar beker */
+            width: 8vh; height: 28vh; background: #f8fafc; border: 0.1vh solid #cbd5e1;
+            z-index: 1; box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.2); 
+            display: flex; justify-content: center;
+            overflow: hidden; /* Mengunci gradasi warna agar tidak melebihi kertas */
+        }
+        
+        /* Titik Tinta */
+        .ink-spot {
+            position: absolute; bottom: 3vh; /* Mulai dari batas bawah kertas yang menyentuh eluen */
+            width: 2.5vh; height: 2.5vh; border-radius: 50%; background: transparent;
+            transition: all 0.5s ease;
+        }
+        
+        /* Animasi Rambatan Kromatogram */
+        .ink-spot.run-hitam { animation: spreadHitam 4s forwards linear; }
+        .ink-spot.run-hijau { animation: spreadHijau 4s forwards linear; }
+
+        @keyframes spreadHitam {
+            0% { background: #000000; height: 2.5vh; border-radius: 50%; }
+            50% { background: linear-gradient(to top, #000000, #ec4899); height: 12vh; border-radius: 1vh; }
+            100% { background: linear-gradient(to top, #1d4ed8 0%, #ec4899 50%, #eab308 100%); height: 22vh; border-radius: 1vh; }
+        }
+        @keyframes spreadHijau {
+            0% { background: #15803d; height: 2.5vh; border-radius: 50%; }
+            100% { background: linear-gradient(to top, #1d4ed8 0%, #15803d 60%, #eab308 100%); height: 22vh; border-radius: 1vh; }
+        }
+
+        /* Animasi Tetesan Bola Tinta */
+        .ink-drop-anim { 
+            position: absolute; top: 15%; left: 50%; font-size: 4vh; 
+            display: none; pointer-events: none; z-index: 10;
+        }
+        .ink-drop-anim.dropping {
+            display: block;
+            animation: dropInkSequence 1s forwards ease-in;
+        }
+        @keyframes dropInkSequence {
+            0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+            80% { transform: translate(-50%, 15vh) scale(0.5); opacity: 1; }
+            100% { transform: translate(-50%, 18vh) scale(0); opacity: 0; }
+        }
+
+        /* --- CONTROLS & STATUS --- */
+        .control-panel { width: 35%; display: flex; flex-direction: column; gap: 2vh; align-items: center; }
+        .btn-action { width: 100%; padding: 2vh 1vw; font-size: 2.6vh; font-weight: 700; border: none; border-radius: 1.5vh; cursor: pointer; box-shadow: 0 0.5vh 1vh rgba(0,0,0,0.3); transition: 0.2s; }
+        .btn-run { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: white; }
+        .btn-run:hover:not(:disabled) { filter: brightness(1.1); transform: translateY(-0.2vh); }
+        .btn-reset { background: #64748b; color: white; font-size: 2.2vh; padding: 1.5vh 1vw; }
+        .btn-reset:hover { background: #475569; }
+        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
+        
+        .status-box { width: 100%; background: rgba(15, 23, 42, 0.8); border: 0.2vh solid rgba(255,255,255,0.1); border-radius: 1.5vh; padding: 2vh; min-height: 15vh; font-size: 2.1vh; line-height: 1.6; color: #cbd5e1; }
+        .bottom-nav { margin-top: 1.5vh; border-top: 0.1vh solid rgba(255,255,255,0.1); padding-top: 1vh; flex-shrink: 0; }
+        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
+        .btn-beranda:hover { color: white; }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <!-- Menu Navigasi Atas -->
+        <nav class="top-nav">
+            <div class="kuis-tabs">
+                <a href="simulasi1.html" class="tab-btn">⚛️ Simulasi 1</a>
+                <a href="simulasi2.html" class="tab-btn">🥤 Simulasi 2</a>
+                <a href="#" class="tab-btn active">🌈 Simulasi 3: Kromatografi</a>
+                <a href="simulasi4.html" class="tab-btn">☕ Simulasi 4</a>
+            </div>
+            <div style="font-size: 2vh; color: #94a3b8; font-weight: 600;">ATOMY LAB WORKSPACE</div>
+        </nav>
+
+        <header class="header-title">
+            <h1>Pemisahan Campuran Warna (Kromatografi)</h1>
+            <p>Seret Ikon Tinta ke kertas saring untuk menotolkannya, lalu amati komponen penyusun warnanya!</p>
+        </header>
+
+        <div class="workspace">
+            
+            <!-- Rak Pilihan Tinta -->
+            <div class="rack-panel">
+                <div class="rack-title">🧪 Pilihan Sampel Tinta</div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="hitam" data-icon="⚫">⚫</div>
+                    <div class="item-label">Tinta Hitam</div>
+                </div>
+                <div class="rack-item">
+                    <div class="drag-icon" draggable="true" data-type="hijau" data-icon="🟢">🟢</div>
+                    <div class="item-label">Tinta Hijau</div>
+                </div>
+            </div>
+
+            <!-- Gelas Beker Utama -->
+            <div class="beaker-panel" id="drop-zone">
+                <div class="ink-drop-anim" id="ink-drop-anim">⚫</div>
+                
+                <div class="beaker">
+                    <div class="chromato-paper">
+                        <div class="ink-spot" id="ink-spot"></div>
+                    </div>
+                    <div class="eluent"></div>
+                </div>
+            </div>
+
+            <!-- Panel Kontrol Hasil -->
+            <div class="control-panel">
+                <button class="btn-action btn-run" id="btn-run" onclick="startChromato()" disabled>🚀 JALANKAN ELUEN</button>
+                <button class="btn-action btn-reset" onclick="resetLab()">🧹 Bersihkan Kertas</button>
+                <div class="status-box" id="status-text">
+                    <b style="color: #fcd34d;">Status Laboratorium:</b><br>
+                    Kertas saring kosong telah dimasukkan ke dalam gelas. <b>Seret ikon bola warna tinta</b> (⚫ atau 🟢) ke arah kertas saring untuk meneteskan sampel.
+                </div>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <a href="index.html" class="btn-beranda">🏠 Kembali ke Beranda Utama</a>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIKA -->
+    <script>
+        let selectedInk = null;
+        let currentStatus = "idle";
+        
+        const inkSpot = document.getElementById('ink-spot');
+        const btnRun = document.getElementById('btn-run');
+        const statusText = document.getElementById('status-text');
+        const dropZone = document.getElementById('drop-zone');
+        const dragIcons = document.querySelectorAll('.drag-icon');
+        const inkDropAnim = document.getElementById('ink-drop-anim');
+
+        // Setup Drag
+        let draggedType = null;
+        let draggedEmoji = null;
+        
+        dragIcons.forEach(icon => {
+            icon.addEventListener('dragstart', (e) => {
+                if (currentStatus !== "idle") { e.preventDefault(); return; }
+                draggedType = icon.getAttribute('data-type');
+                draggedEmoji = icon.getAttribute('data-icon');
+            });
+        });
+
+        // Setup Drop
+        dropZone.addEventListener('dragover', (e) => { 
+            e.preventDefault(); 
+            if(currentStatus === "idle") dropZone.classList.add('drag-over'); 
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault(); 
+            dropZone.classList.remove('drag-over');
+            if(draggedType && currentStatus === "idle") triggerDottingSequence(draggedType, draggedEmoji);
+        });
+
+        // 1. Animasi Meneteskan Tinta
+        function triggerDottingSequence(type, emoji) {
+            currentStatus = "dotting"; 
+            selectedInk = type;
+            
+            // Matikan rak
+            dragIcons.forEach(icon => icon.classList.add('disabled'));
+
+            // Jalankan animasi jatuh bola tinta
+            inkDropAnim.innerText = emoji;
+            inkDropAnim.classList.add('dropping');
+            
+            setTimeout(() => {
+                inkDropAnim.classList.remove('dropping');
+                
+                // Warnai titik di kertas
+                inkSpot.style.backgroundColor = type === 'hitam' ? '#000000' : '#15803d';
+                
+                currentStatus = "added";
+                btnRun.disabled = false;
+                statusText.innerHTML = `<b style="color: #38bdf8;">Tinta Berhasil Diteteskan!</b><br>Noda zat warna sudah melekat pada fasa diam (kertas). Klik tombol <b>JALANKAN ELUEN</b> untuk merembeskan air ke atas.`;
+            }, 1000);
+        }
+
+        // 2. Animasi Perambatan Gradasi Warna
+        function startChromato() {
+            currentStatus = "running"; 
+            btnRun.disabled = true;
+            
+            // Mulai animasi CSS
+            inkSpot.classList.add(`run-${selectedInk}`);
+            
+            statusText.innerHTML = `<b style="color: #ec4899;">Eluen Merambat Naik...</b><br>Fasa gerak (air) bergerak naik melewati serat kertas akibat gaya kapiler, membawa molekul pigmen warna ke atas!`;
+
+            // Tampilkan hasil akhir
+            setTimeout(() => {
+                currentStatus = "done";
+                
+                if(selectedInk === 'hitam') {
+                    statusText.innerHTML = `<b style="color: #22c55e;">Hasil: TINTA HITAM ADALAH CAMPURAN</b><br>
+                    Warna hitam terpisah menjadi susunan pita warna <b>Biru</b>, <b>Merah Muda</b>, dan <b>Kuning</b>.<br>
+                    • <b>Analisis:</b> Warna hitam pada tinta bukanlah zat tunggal, melainkan campuran dari beberapa pigmen warna penyusunnya.`;
+                } else {
+                    statusText.innerHTML = `<b style="color: #22c55e;">Hasil: TINTA HIJAU ADALAH CAMPURAN</b><br>
+                    Warna hijau terurai memisah menjadi warna <b>Biru</b> di bagian bawah dan <b>Kuning</b> di bagian atas.<br>
+                    • <b>Analisis:</b> Pigmen pewarna kuning merambat paling jauh. Hal ini menandakan pigmen tersebut memiliki daya larut tertinggi terhadap air (eluen).`;
+                }
+            }, 4000);
+        }
+
+        // 3. Reset
+        function resetLab() {
+            currentStatus = "idle"; 
+            selectedInk = null;
+            
+            dragIcons.forEach(icon => icon.classList.remove('disabled'));
+            btnRun.disabled = true; 
+            
+            inkSpot.className = "ink-spot"; 
+            inkSpot.style.backgroundColor = "transparent";
+            
+            statusText.innerHTML = `<b style="color: #fcd34d;">Status Laboratorium:</b><br>Kertas saring kosong telah dimasukkan ke dalam gelas. <b>Seret ikon bola warna tinta</b> (⚫ atau 🟢) ke arah kertas saring.`;
+        }
+    </script>
+</body>
+</html>
