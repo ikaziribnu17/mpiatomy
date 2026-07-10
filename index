@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Interaktif - ATOMY</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- KESEPAKATAN GAYA GLOBAL (Konsisten 100%) --- */
+        :root {
+            --navy: #3D5474;
+            --blue-medium: #6586B1;
+            --blue-light: #82B2D8;
+            --cyan: #26A5CB;
+            --accent-orange: #EFB25B;
+            --text-dark: #2C3E50;
+            --bg-white: #FFFFFF;
+        }
+
+        html, body {
+            -webkit-text-size-adjust: 100%;
+            -moz-text-size-adjust: 100%;
+            -ms-text-size-adjust: 100%;
+            text-size-adjust: 100%;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: 100dvh;
+            overflow: hidden;
+        }
+
+        /* Container Kanvas 16:9 */
+        .canvas {
+            width: 95vw;
+            max-width: 1100px;
+            aspect-ratio: 16 / 9;
+            background-image: url('https://raw.githubusercontent.com/ikaziribnu17/xsinuli1/69ec1cd9663e74c43854b5606158d8219a8e26fd/unnamed.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            padding: 30px 45px;
+            justify-content: space-between;
+        }
+
+        /* Overlay Latar Belakang */
+        .canvas::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(20, 35, 55, 0.85);
+            z-index: 1;
+        }
+
+        /* --- HEADER SLIDE --- */
+        .slide-header {
+            z-index: 10;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+            padding-bottom: 10px;
+        }
+
+        .slide-title {
+            font-size: 28px;
+            font-weight: 800;
+            color: white;
+            letter-spacing: 1px;
+        }
+
+        .slide-title span {
+            color: var(--accent-orange);
+        }
+
+        .section-badge {
+            background: var(--accent-orange);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* --- MENU LAYOUT BARU (Kiri: Menu, Kanan: Info) --- */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.2fr 0.8fr;
+            gap: 30px;
+            width: 100%;
+            height: 75%;
+            z-index: 10;
+            position: relative;
+            padding: 15px 0;
+        }
+
+        /* Kolom Kiri: Daftar Menu */
+        .menu-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        .mission-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            gap: 20px;
+            cursor: pointer;
+            text-decoration: none;
+            border: 3px solid transparent;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            flex: 1;
+        }
+
+        .mission-icon {
+            width: 70px;
+            height: 70px;
+            background: rgba(38, 165, 203, 0.1);
+            border-radius: 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 35px;
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+
+        .mission-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .mission-tag {
+            font-size: 12px;
+            font-weight: 800;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mission-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: var(--navy);
+            line-height: 1.2;
+        }
+
+        .mission-desc {
+            font-size: 13px;
+            color: var(--text-dark);
+            font-weight: 500;
+            opacity: 0.8;
+            margin-top: 3px;
+        }
+
+        /* Kolom Kanan: Panel Petunjuk & Semangat */
+        .info-panel {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            border-radius: 20px;
+            padding: 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            border: 2px solid var(--blue-light);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-panel::before {
+            content: "💡";
+            position: absolute;
+            top: -20px;
+            right: -10px;
+            font-size: 100px;
+            opacity: 0.1;
+            transform: rotate(15deg);
+        }
+
+        .info-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--accent-orange);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-text {
+            font-size: 14.5px;
+            color: var(--text-dark);
+            line-height: 1.6;
+            font-weight: 500;
+            text-align: justify;
+        }
+        
+        .info-text b {
+            color: var(--cyan);
+        }
+
+        /* --- HOVER EFFECTS --- */
+        .mission-card:hover {
+            transform: translateX(10px) scale(1.02);
+            border-color: var(--cyan);
+            background: #FFFFFF;
+            box-shadow: 0 15px 35px rgba(38, 165, 203, 0.4);
+        }
+
+        .mission-card:hover .mission-icon {
+            background: var(--cyan);
+            transform: rotate(-10deg) scale(1.1);
+            color: white;
+        }
+
+        /* --- STANDAR NAVIGASI BAWAH (3 TOMBOL) --- */
+        .bottom-nav {
+            z-index: 10;
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            padding-top: 15px;
+        }
+
+        .nav-group {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-nav {
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            text-decoration: none;
+            border: none;
+        }
+
+        .btn-home { background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .btn-home:hover { background: white; color: var(--navy); }
+        .btn-back { background: transparent; border: 2px solid var(--blue-light); color: var(--blue-light); }
+        .btn-back:hover { background: rgba(130, 178, 216, 0.1); transform: translateX(-5px); }
+
+        /* --- RESPONSIVITAS HP --- */
+        @media (max-width: 768px) {
+            .canvas { width: 100vw; height: 100vh; height: 100dvh; aspect-ratio: auto; border-radius: 0; padding: 20px; }
+            .main-content { grid-template-columns: 1fr; grid-template-rows: auto; height: 80%; overflow-y: auto; gap: 15px; }
+            .mission-card { padding: 15px; }
+            .mission-icon { width: 55px; height: 55px; font-size: 25px; }
+            .mission-name { font-size: 18px; }
+            .btn-nav { padding: 8px 15px; font-size: 12px; }
+            .info-panel { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="canvas">
+        
+        <div class="slide-header">
+            <div class="slide-title">Zona Ujian: <span>Ayo Berlatih!</span></div>
+            <div class="section-badge">Menu Interaktif</div>
+        </div>
+
+        <div class="main-content">
+            
+            <!-- KOLOM KIRI: DAFTAR MENU -->
+            <div class="menu-list">
+                <a href="simulasi1.html" class="mission-card">
+                    <div class="mission-icon">🔬</div>
+                    <div class="mission-info">
+                        <span class="mission-tag">Tingkat 1</span>
+                        <h3 class="mission-name">Simulasi Virtual</h3>
+                        <p class="mission-desc">Rangkai atom di reaktor, uji reaksi zat, dan saring campuran secara interaktif!</p>
+                    </div>
+                </a>
+
+                <a href="kuis1.html" class="mission-card">
+                    <div class="mission-icon">📝</div>
+                    <div class="mission-info">
+                        <span class="mission-tag">Tingkat 2</span>
+                        <h3 class="mission-name">Tantangan Kuis</h3>
+                        <p class="mission-desc">Uji pemahamanmu dengan kuis tarik-lepas dan tebak struktur materi yang seru!</p>
+                    </div>
+                </a>
+
+                <a href="#" class="mission-card">
+                    <div class="mission-icon">🏆</div>
+                    <div class="mission-info">
+                        <span class="mission-tag">Tingkat 3</span>
+                        <h3 class="mission-name">Evaluasi Akhir</h3>
+                        <p class="mission-desc">Ukur penguasaan seluruh materimu secara menyeluruh untuk mendapatkan skor akhir.</p>
+                    </div>
+                </a>
+            </div>
+
+            <!-- KOLOM KANAN: PANEL PETUNJUK & SEMANGAT -->
+            <div class="info-panel">
+                <div class="info-title">🚀 Petunjuk & Semangat!</div>
+                <div class="info-text">
+                    Selamat datang di <b>Zona Ujian ATOMY!</b> Di sini adalah tempatmu untuk mempraktikkan langsung semua materi yang sudah dipelajari.<br><br>
+                    Mulailah dari menu <b>Simulasi Virtual</b> untuk bereksperimen selayaknya ilmuwan di laboratorium. Setelah itu, asah ingatan dan kecepatan berpikirmu di menu <b>Kuis</b>.<br><br>
+                    Jika kamu sudah merasa mantap, hadapi <b>Evaluasi Akhir</b>! Jangan takut salah, karena setiap percobaan adalah langkah menuju keberhasilan. <i>Semangat bereksperimen, Ilmuwan Muda!</i>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-group">
+                <a href="slide_2_beranda.html" class="btn-nav btn-home">🏠 Beranda Utama</a>
+            </div>
+            <div class="nav-group">
+                <a href="slide_11_pemisahan.html" class="btn-nav btn-back">⬅️ Kembali ke Materi</a>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
