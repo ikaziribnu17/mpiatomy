@@ -52,13 +52,18 @@
             border: 0.1vh solid rgba(255,255,255,0.1); transition: 0.3s;
         }
 
-        /* IKON BESAR DRAGGABLE */
+        /* IKON BESAR DRAGGABLE (DIPERBARUI UNTUK LAYAR SENTUH) */
         .drag-icon {
-            font-size: 4.5vh; /* Ikon sangat besar */
+            font-size: 4.5vh; 
             background: rgba(255, 255, 255, 0.1); width: 8vh; height: 8vh;
             display: flex; justify-content: center; align-items: center;
             border-radius: 1.5vh; cursor: grab; border: 0.2vh dashed #cbd5e1;
             transition: 0.2s;
+            /* Tambahan khusus layar sentuh */
+            touch-action: none; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .drag-icon:active { cursor: grabbing; transform: scale(0.9); border-color: #ec4899; }
         .drag-icon.disabled { opacity: 0.2; cursor: not-allowed; border-style: solid; pointer-events: none; }
@@ -109,7 +114,7 @@
         /* FASA HETEROGEN */
         /* Lapisan Minyak di Atas Permukaan Air */
         .oil-layer {
-            position: absolute; top: 0; left: 0; width: 100%; /* Top 0 di dalam .water artinya berada tepat di permukaan atas air */
+            position: absolute; top: 0; left: 0; width: 100%;
             height: 0%; background: rgba(234, 179, 8, 0.75);
             border-bottom: 0.2vh solid #f59e0b; transition: height 1.5s ease-in-out; display: none;
         }
@@ -125,7 +130,7 @@
             z-index: 10; display: none; flex-direction: column; align-items: center; pointer-events: none;
         }
         .pour-icon-visual {
-            font-size: 6vh; transform: rotate(-45deg); /* Efek miring tuang */
+            font-size: 6vh; transform: rotate(-45deg);
             transition: 0.3s;
         }
         
@@ -295,7 +300,7 @@
 
             if (type === 'gula' || type === 'pasir') {
                 // Efek Taburan Partikel
-                let color = type === 'gula' ? '#ffffff' : '#475569'; // putih gula atau abu batu pasir
+                let color = type === 'gula' ? '#ffffff' : '#475569';
                 for (let i = 0; i < 30; i++) {
                     setTimeout(() => {
                         const p = document.createElement('div');
@@ -303,7 +308,7 @@
                         p.style.backgroundColor = color;
                         p.style.width = p.style.height = `${Math.random() * 0.8 + 0.4}vh`;
                         p.style.left = `${Math.random() * 8}vh`;
-                        if(type === 'pasir') p.style.borderRadius = '20%'; // bentuk kerikil
+                        if(type === 'pasir') p.style.borderRadius = '20%';
                         particleArea.appendChild(p);
                         setTimeout(() => p.remove(), 800);
                     }, i * 50);
@@ -314,9 +319,9 @@
                 // Efek Aliran Cairan
                 let color = type === 'sirup' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(245, 158, 11, 0.8)';
                 liquidStream.style.backgroundColor = color;
-                liquidStream.style.height = '18vh'; // Cairan turun ke air
+                liquidStream.style.height = '18vh'; 
                 
-                setTimeout(() => { liquidStream.style.height = '0vh'; }, 1200); // Putus aliran
+                setTimeout(() => { liquidStream.style.height = '0vh'; }, 1200); 
                 setTimeout(finishPouring, 1700);
             }
         }
@@ -366,7 +371,7 @@
                 • <b>Ciri:</b> 2 fasa terpisah, ada <b>endapan padat</b> di dasar gelas.`;
             } else if (type === 'minyak') {
                 oilLayer.style.display = 'block';
-                setTimeout(() => oilLayer.style.height = '18%', 50); // Tinggi lapisan minyak meluas ke bawah
+                setTimeout(() => oilLayer.style.height = '18%', 50);
                 statusText.innerHTML = `<b style="color: #ef4444;">Hasil: CAMPURAN HETEROGEN</b><br>
                 Minyak nonpolar, air polar (tidak bisa menyatu). Minyak lebih ringan sehingga naik.<br>
                 • <b>Ciri:</b> Minyak mengapung tepat di <b>permukaan air</b>.`;
@@ -394,5 +399,8 @@
             statusText.innerHTML = `<b style="color: #fcd34d;">Status Laboratorium:</b><br>Gelas berisi air murni siap digunakan. <b>Tahan dan seret Ikon</b> dari rak, lalu lepas di atas gelas beker.`;
         }
     </script>
+
+    <!-- SCRIPT POLYFILL UNTUK MENDUKUNG DRAG AND DROP DI LAYAR SENTUH -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
 </body>
 </html>
