@@ -90,13 +90,14 @@
             position: relative;
         }
 
+        /* Font Header Diperkecil Sedikit */
         .header-title h1 {
-            font-size: 3.8vh;
+            font-size: 3.2vh; 
             color: #38bdf8;
         }
 
         .header-title p {
-            font-size: 2.2vh;
+            font-size: 1.8vh;
             color: #cbd5e1;
         }
 
@@ -105,9 +106,9 @@
             display: flex;
             flex: 1;
             flex-direction: column;
-            gap: 1.5vh;
+            gap: 1vh; /* Jarak vertikal dikurangi */
             min-height: 0;
-            margin-top: 1vh;
+            margin-top: 0.5vh;
         }
 
         /* Kotak Reaksi (Diperluas Penuh) */
@@ -115,13 +116,13 @@
             flex: 1;
             background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
             border: 0.3vh dashed #0ea5e9;
-            border-radius: 2vh;
+            border-radius: 1.5vh; /* Disesuaikan */
             display: flex;
             flex-wrap: wrap;
             align-content: center;
             justify-content: center;
             gap: 1vw;
-            padding: 2vh;
+            padding: 1.5vh; /* Padding dikecilkan */
             position: relative;
         }
 
@@ -129,7 +130,7 @@
             content: "Seret atom ke sini untuk bereaksi";
             position: absolute;
             color: rgba(255,255,255,0.15);
-            font-size: 2.5vh;
+            font-size: 2.2vh;
             font-weight: 700;
             pointer-events: none;
         }
@@ -142,24 +143,24 @@
         /* Keranjang Atom */
         .atom-pool {
             background: rgba(255, 255, 255, 0.05);
-            border-radius: 1.5vh;
-            padding: 1.5vh;
+            border-radius: 1vh;
+            padding: 1vh; /* Dikecilkan */
             display: flex;
             justify-content: center;
-            gap: 2.5vw;
+            gap: 2vw;
             border: 0.1vh solid rgba(255,255,255,0.1);
             flex-shrink: 0;
         }
 
-        /* Visual Atom (Bentuk Bola) */
+        /* Visual Atom (Bentuk Bola) - Dikecilkan */
         .atom {
-            width: 7vh;
-            height: 7vh;
+            width: 5.5vh; /* Dikecilkan dari 7vh */
+            height: 5.5vh; 
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 3vh;
+            font-size: 2.5vh; /* Font disesuaikan */
             font-weight: 700;
             box-shadow: inset -0.5vh -0.5vh 1vh rgba(0,0,0,0.4), 0 0.5vh 1vh rgba(0,0,0,0.3);
             cursor: grab;
@@ -192,7 +193,7 @@
             position: absolute;
             top: -0.5vh; right: -0.5vh;
             background: #ef4444; color: white;
-            font-size: 1.6vh; width: 2.5vh; height: 2.5vh;
+            font-size: 1.6vh; width: 2.2vh; height: 2.2vh;
             border-radius: 50%; display: flex;
             justify-content: center; align-items: center;
             font-weight: 700;
@@ -208,14 +209,14 @@
         .controls {
             display: flex;
             justify-content: center;
-            gap: 2vw;
-            margin-top: 1.5vh;
+            gap: 1.5vw;
+            margin-top: 1vh; /* Lebih dekat */
             flex-shrink: 0;
         }
 
         .btn {
-            padding: 1.5vh 2.5vw;
-            font-size: 2.2vh;
+            padding: 1.2vh 2vw; /* Lebih ringkas */
+            font-size: 2vh;
             font-weight: 700;
             border: none;
             border-radius: 1vh;
@@ -227,7 +228,7 @@
             gap: 0.5vw;
         }
 
-        .btn-periksa { background: #10b981; color: white; font-size: 2.4vh; }
+        .btn-periksa { background: #10b981; color: white; font-size: 2.1vh; }
         .btn-periksa:hover { background: #059669; transform: translateY(-0.2vh); }
         .btn-reset { background: #64748b; color: white; }
         .btn-reset:hover { background: #475569; transform: translateY(-0.2vh); }
@@ -238,8 +239,8 @@
             position: absolute;
             right: 0; top: 50%;
             transform: translateY(-50%);
-            padding: 1vh 1.5vw;
-            font-size: 1.8vh;
+            padding: 0.8vh 1.2vw;
+            font-size: 1.6vh;
         }
         .btn-petunjuk:hover { background: #d97706; }
 
@@ -307,12 +308,12 @@
 
         /* Bottom Nav */
         .bottom-nav {
-            margin-top: 1.5vh;
+            margin-top: 1vh; /* Lebih ditarik ke atas */
             border-top: 0.1vh solid rgba(255,255,255,0.1);
-            padding-top: 1vh;
+            padding-top: 0.8vh;
             flex-shrink: 0;
         }
-        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
+        .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 1.8vh; }
         .btn-beranda:hover { color: white; }
     </style>
 </head>
@@ -340,7 +341,7 @@
 
         <!-- Area Kerja Utama -->
         <div class="workspace">
-            <!-- Drop Zone Reaktor (Lebih Luas) -->
+            <!-- Drop Zone Reaktor (Lebih Luas & Ringkas) -->
             <div class="reaction-box" id="reaction-box"></div>
 
             <!-- Keranjang Pilihan Bahan Atom -->
