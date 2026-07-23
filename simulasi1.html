@@ -22,17 +22,16 @@
             color: #ffffff;
             width: 100vw;
             height: 100vh;
-            overflow: hidden; /* Mengunci scroll bar browser */
+            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* PERBAIKAN UTAMA: Mengunci tinggi menjadi 96vh tanpa aspect-ratio */
         .app-container {
             width: 96vw;
             max-width: 1400px;
-            height: 96vh; /* Aplikasi tidak akan pernah lebih tinggi dari layar */
+            height: 96vh;
             background: rgba(30, 41, 59, 0.7);
             border: 0.2vh solid rgba(14, 165, 233, 0.3);
             border-radius: 2vh;
@@ -51,7 +50,7 @@
             align-items: center;
             border-bottom: 0.2vh solid rgba(255,255,255,0.1);
             padding-bottom: 1vh;
-            flex-shrink: 0; /* Mencegah elemen menyusut */
+            flex-shrink: 0;
         }
 
         .kuis-tabs {
@@ -85,7 +84,7 @@
         .header-title {
             text-align: center;
             margin: 1vh 0;
-            flex-shrink: 0; /* Mencegah judul terpotong */
+            flex-shrink: 0;
             position: relative;
         }
 
@@ -102,16 +101,19 @@
         /* --- 4. MAIN WORKSPACE --- */
         .workspace {
             display: flex;
-            flex: 1; /* Akan mengisi seluruh sisa ruang kosong yang aman */
+            flex: 1;
             flex-direction: column;
             gap: 1.5vh;
             min-height: 0;
             margin-top: 1vh;
+            justify-content: center; /* Memastikan isi terpusat secara vertikal */
         }
 
-        /* Kotak Reaksi */
+        /* KOTAK REAKSI: Diperkecil Secara Spesifik */
         .reaction-box {
-            flex: 1; /* Kotak ini yang akan fleksibel membesar/mengecil */
+            flex: none; /* Mencegah kotak melar dan mendorong elemen lain */
+            height: 35vh; /* Tinggi dikunci menjadi lebih kecil dan aman */
+            min-height: 150px;
             background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 0%, rgba(15, 23, 42, 0.85) 100%);
             border: 0.3vh dashed #0ea5e9;
             border-radius: 2vh;
@@ -122,7 +124,7 @@
             gap: 1vw;
             padding: 2vh;
             position: relative;
-            overflow-y: auto; /* Jika atom terlalu banyak, kotak ini bisa di-scroll tanpa merusak layout luar */
+            overflow-y: auto; /* Jika atom kepenuhan, bisa di-scroll di dalam kotak */
         }
 
         .reaction-box::before {
@@ -148,10 +150,10 @@
             justify-content: center;
             gap: 2.5vw;
             border: 0.1vh solid rgba(255,255,255,0.1);
-            flex-shrink: 0; /* Mencegah keranjang ini menyusut */
+            flex-shrink: 0;
         }
 
-        /* Visual Atom (DIKEMBALIKAN KE UKURAN ASLI YANG JELAS: 7vh) */
+        /* Visual Atom */
         .atom {
             width: 7vh;
             height: 7vh;
@@ -209,7 +211,7 @@
             justify-content: center;
             gap: 2vw;
             margin-top: 1.5vh;
-            flex-shrink: 0; /* Memastikan tombol aksi selalu utuh */
+            flex-shrink: 0; /* Menjaga agar tombol ini selalu utuhukurannya */
         }
 
         .btn {
@@ -308,7 +310,7 @@
             margin-top: 1.5vh;
             border-top: 0.1vh solid rgba(255,255,255,0.1);
             padding-top: 1vh;
-            flex-shrink: 0; /* Memastikan tautan terbawah tidak terpotong */
+            flex-shrink: 0;
         }
         .btn-beranda { color: #94a3b8; text-decoration: none; font-size: 2vh; }
         .btn-beranda:hover { color: white; }
@@ -337,7 +339,7 @@
 
         <!-- Area Kerja Utama -->
         <div class="workspace">
-            <!-- Drop Zone Reaktor -->
+            <!-- Drop Zone Reaktor (Dikecilkan Agar Tombol Bawah Terlihat) -->
             <div class="reaction-box" id="reaction-box"></div>
 
             <!-- Keranjang Pilihan Bahan Atom -->
@@ -395,7 +397,6 @@
 
     <!-- --- SISTEM LOGIKA JAVASCRIPT SIMULASI --- -->
     <script>
-        // Database Sifat Unsur untuk analisis Atom Tunggal / Unsur Sejenis
         const dataUnsur = {
             "H": { nama: "Hidrogen", noAtom: 1, massa: 1 },
             "O": { nama: "Oksigen", noAtom: 8, massa: 16 },
@@ -411,7 +412,6 @@
 
         let draggedAtomData = null;
 
-        // Implementasi mekanisme Drag and Drop dasar
         sourceAtoms.forEach(atom => {
             atom.addEventListener('dragstart', function() {
                 draggedAtomData = {
@@ -440,7 +440,6 @@
                 newAtom.innerText = draggedAtomData.type;
                 newAtom.setAttribute('data-atom', draggedAtomData.type);
                 
-                // Mekanisme klik untuk menghapus atom individu dari papan reaktor
                 newAtom.addEventListener('click', function() { this.remove(); });
 
                 reactionBox.appendChild(newAtom);
@@ -448,15 +447,12 @@
             }
         });
 
-        // Pengendali Tampilan Modal Petunjuk
         function bukaPetunjuk() { blueprintModal.style.display = 'flex'; }
         function tutupPetunjuk() { blueprintModal.style.display = 'none'; }
         function tutupResult() { resultModal.style.display = 'none'; }
 
-        // Bersihkan Papan Reaktor
         function bersihkanReaktor() { reactionBox.innerHTML = ''; }
 
-        // --- CORE ALGORITMA PENGECEKAN REAKSI KIMIA ---
         function periksaReaksi() {
             const atomsInBox = reactionBox.querySelectorAll('.atom');
             
