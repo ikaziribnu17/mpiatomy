@@ -43,6 +43,12 @@
         .drag-icon {
             font-size: 4.5vh; background: rgba(255, 255, 255, 0.1); width: 8vh; height: 8vh;
             display: flex; justify-content: center; align-items: center; border-radius: 1.5vh; cursor: grab; border: 0.2vh dashed #cbd5e1; transition: 0.2s;
+            
+            /* Tambahan khusus layar sentuh */
+            touch-action: none; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
         .drag-icon:active { cursor: grabbing; transform: scale(0.9); border-color: #ec4899; }
         .drag-icon.disabled { opacity: 0.2; cursor: not-allowed; pointer-events: none; }
@@ -354,5 +360,8 @@
             statusText.innerHTML = `<b style="color: #fcd34d;">Status Laboratorium:</b><br>Corong saring dan wadah penampung sudah siap. <b>Seret wadah sampel campuran</b> dari rak kiri, lepaskan tepat di atas corong saring untuk menuang.`;
         }
     </script>
+
+    <!-- SCRIPT POLYFILL UNTUK MENDUKUNG DRAG AND DROP DI LAYAR SENTUH -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
 </body>
 </html>
