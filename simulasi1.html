@@ -165,6 +165,12 @@
             cursor: grab;
             position: relative;
             transition: transform 0.1s;
+            
+            /* Tambahan khusus layar sentuh */
+            touch-action: none; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
         .atom:active { cursor: grabbing; transform: scale(0.9); }
@@ -553,5 +559,8 @@
             resultModal.style.display = 'flex';
         }
     </script>
+
+    <!-- SCRIPT POLYFILL UNTUK MENDUKUNG DRAG AND DROP DI LAYAR SENTUH -->
+    <script src="https://bernardo-castilho.github.io/DragDropTouch/DragDropTouch.js"></script>
 </body>
 </html>
